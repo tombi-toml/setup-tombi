@@ -15,6 +15,7 @@ jobs:
         version:
           - '0.3.31'
           - 'latest'
+      fail-fast: false
     steps:
     - uses: tombi-toml/setup-tombi@v0.1.2
       with:
