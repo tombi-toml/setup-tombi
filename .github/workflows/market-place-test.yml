@@ -17,7 +17,7 @@ jobs:
           - 'latest'
       fail-fast: false
     steps:
-    - uses: tombi-toml/setup-tombi@v0.1.2
+    - uses: tombi-toml/setup-tombi@v1
       with:
         version: ${{ matrix.version }}
     - run: tombi --version
