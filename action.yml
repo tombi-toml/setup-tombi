@@ -14,5 +14,5 @@ runs:
   main: "dist/index.js"
 
 branding:
-  icon: "check"
-  color: "green"
+  icon: "package"
+  color: "blue"
