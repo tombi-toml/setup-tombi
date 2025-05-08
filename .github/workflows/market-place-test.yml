@@ -15,3 +15,4 @@ jobs:
     - uses: tombi-toml/setup-tombi
       with:
         version: '0.3.31'
+    - run: tombi --version
