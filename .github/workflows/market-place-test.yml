@@ -10,9 +10,13 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
+    strategy:
+      matrix:
+        version:
+          - '0.3.31'
+          - 'latest'
     steps:
     - uses: tombi-toml/setup-tombi@v0.1.2
       with:
-        version: '0.3.31'
+        version: ${{ matrix.version }}
     - run: tombi --version
