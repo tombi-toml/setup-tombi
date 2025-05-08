@@ -1,0 +1,31 @@
+{
+  "name": "setup-tombi",
+  "version": "0.1.0",
+  "private": true,
+  "description": "GitHub Action to set up Tombi",
+  "main": "dist/index.js",
+  "scripts": {
+    "preinstall": "npx only-allow pnpm",
+    "build": "tsc",
+    "format": "biome format --fix",
+    "format-check": "biome format",
+    "lint": "biome lint --fix",
+    "lint-check": "biome lint",
+    "test": "vitest run"
+  },
+  "keywords": ["github", "actions", "tombi", "toml", "setup"],
+  "author": "tombi-toml",
+  "license": "MIT",
+  "packageManager": "pnpm@10.10.0",
+  "dependencies": {
+    "@actions/core": "^1.10.1",
+    "@actions/tool-cache": "^2.0.1"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "1.9.4",
+    "@types/node": "^20.11.24",
+    "@vercel/ncc": "^0.38.1",
+    "typescript": "^5.3.3",
+    "vitest": "^3.1.3"
+  }
+}
