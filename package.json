@@ -6,7 +6,7 @@
   "main": "dist/index.js",
   "scripts": {
     "preinstall": "npx only-allow pnpm",
-    "build": "tsc",
+    "build": "ncc build src/index.ts -o dist",
     "format": "biome format --fix",
     "format-check": "biome format",
     "lint": "biome lint --fix",
