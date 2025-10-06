@@ -15,7 +15,7 @@ This action sets up [Tombi](https://github.com/tombi-toml/tombi) in your GitHub 
 ```yaml
 - uses: tombi-toml/setup-tombi@v1
   with:
-    version: '0.4.4'
+    version: '0.4.5'
 ```
 
 ### Install with checksum verification
@@ -23,7 +23,7 @@ This action sets up [Tombi](https://github.com/tombi-toml/tombi) in your GitHub 
 ```yaml
 - uses: tombi-toml/setup-tombi@v1
   with:
-    version: '0.4.4'
+    version: '0.4.5'
     checksum: 'sha256-checksum-here'
 ```
 
@@ -54,7 +54,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: tombi-toml/setup-tombi@v1
         with:
-          version: '0.4.4'
+          version: '0.4.5'
       - name: Validate TOML files
         run: tombi lint
 ```
