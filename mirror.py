@@ -39,39 +39,29 @@ def main():
         v for v in versions if v > current_version and not v.is_prerelease
     )
 
-    print(f"Versions to mirror: {versions}")
-    for i, version in enumerate(versions):
-        tag_name = f"v{version}"
-        paths = update_version_in_files(version)
+    if not versions:
+        print("No newer versions found")
+        return
+
+    latest_version = versions[-1]
+    print(f"Latest version: {latest_version}")
+
+    if latest_version != current_version:
+        paths = update_version_in_files(latest_version)
 
         subprocess.run(["git", "add", *paths], check=True)
-        subprocess.run(["git", "commit", "-m", f"Update Tombi to {tag_name}"], check=True)
+        subprocess.run(["git", "commit", "-m", f"Update Tombi version to {latest_version}"], check=True)
 
-        subprocess.run(["git", "tag", tag_name], check=True)
         subprocess.run(
-            ["git", "push", "origin", "HEAD:refs/heads/main", "--tags"], check=True
+            ["git", "push", "origin", "HEAD:refs/heads/main"], check=True
         )
 
-        gh_release_cmd = [
-            "gh",
-            "release",
-            "create",
-            tag_name,
-            "--title",
-            tag_name,
-            "--notes",
-            f"Update Tombi to {tag_name}\n\nSee: https://github.com/tombi-toml/tombi/releases/tag/{tag_name}",
-            "--verify-tag",
-        ]
-        if i == len(versions) - 1:
-            gh_release_cmd.append("--latest")
-        subprocess.run(gh_release_cmd, check=True)
 
-
-def update_version_in_files(version: Version) -> tuple[str, ...]:
+def update_version_in_files(new_version: Version) -> tuple[str, ...]:
     def replace_readme_md(content: str) -> str:
         # Replace version in usage examples
-        content = re.sub(r"version: '\d+\.\d+\.\d+'", f"version: '{version}'", content)
+        content = re.sub(r"version: '\d+\.\d+\.\d+'", f"version: '{new_version}'", content)
+        content = re.sub(r'e.g., "\d+\.\d+\.\d+", "latest"', f'e.g., "{new_version}", "latest"', content)
         return content
 
     paths = {
