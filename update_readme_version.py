@@ -50,18 +50,25 @@ def main():
         paths = update_version_in_files(latest_version)
 
         subprocess.run(["git", "add", *paths], check=True)
-        subprocess.run(["git", "commit", "-m", f"Update Tombi version to {latest_version}"], check=True)
-
         subprocess.run(
-            ["git", "push", "origin", "HEAD:refs/heads/main"], check=True
+            ["git", "commit", "-m", f"Update Tombi version to {latest_version}"],
+            check=True,
         )
+
+        subprocess.run(["git", "push", "origin", "HEAD:refs/heads/main"], check=True)
 
 
 def update_version_in_files(new_version: Version) -> tuple[str, ...]:
     def replace_readme_md(content: str) -> str:
         # Replace version in usage examples
-        content = re.sub(r"version: '\d+\.\d+\.\d+'", f"version: '{new_version}'", content)
-        content = re.sub(r'e.g., "\d+\.\d+\.\d+", "latest"', f'e.g., "{new_version}", "latest"', content)
+        content = re.sub(
+            r"version: '\d+\.\d+\.\d+'", f"version: '{new_version}'", content
+        )
+        content = re.sub(
+            r'e.g., "\d+\.\d+\.\d+", "latest"',
+            f'e.g., "{new_version}", "latest"',
+            content,
+        )
         return content
 
     paths = {

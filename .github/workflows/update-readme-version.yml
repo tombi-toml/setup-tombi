@@ -17,6 +17,6 @@ jobs:
       - run: git config --global user.name 'Github Actions'
       - run: git config --global user.email '41898282+github-actions[bot]@users.noreply.github.com'
 
-      - run: uv run --no-project mirror.py
+      - run: uv run --no-project update_readme_version.py
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
