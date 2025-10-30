@@ -2,9 +2,11 @@ name: Marketplace Test
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
   pull_request:
-    branches: [ main ]
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
@@ -13,11 +15,11 @@ jobs:
     strategy:
       matrix:
         version:
-          - '0.3.45'
-          - 'latest'
+          - "1.0.0"
+          - "latest"
       fail-fast: false
     steps:
-    - uses: tombi-toml/setup-tombi@v1
-      with:
-        version: ${{ matrix.version }}
-    - run: tombi --version
+      - uses: tombi-toml/setup-tombi@v1
+        with:
+          version: ${{ matrix.version }}
+      - run: tombi --version
