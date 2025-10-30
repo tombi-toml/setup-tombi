@@ -2,22 +2,24 @@ name: Marketplace Test
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
   pull_request:
-    branches: [ main ]
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
-  build:
+  action-test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         version:
-          - '0.3.45'
-          - 'latest'
+          - "0.6.40"
+          - "latest"
       fail-fast: false
     steps:
-    - uses: tombi-toml/setup-tombi@v1
-      with:
-        version: ${{ matrix.version }}
-    - run: tombi --version
+      - uses: tombi-toml/setup-tombi@v1
+        with:
+          version: ${{ matrix.version }}
+      - run: tombi --version

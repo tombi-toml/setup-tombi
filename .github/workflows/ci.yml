@@ -2,36 +2,38 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
   pull_request:
-    branches: [ main ]
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
-  build:
+  ci:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version-file: '.node-version'
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: ".node-version"
 
-    - name: Install pnpm
-      uses: pnpm/action-setup@v2
-      with:
-        run_install: false
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          run_install: false
 
-    - name: Install dependencies
-      run: pnpm install
+      - name: Install dependencies
+        run: pnpm install
 
-    - name: Check formatting
-      run: pnpm run format-check
+      - name: Check formatting
+        run: pnpm run format-check
 
-    - name: Check linting
-      run: pnpm run lint-check
+      - name: Check linting
+        run: pnpm run lint-check
 
-    - name: Run tests
-      run: pnpm run test
+      - name: Run tests
+        run: pnpm run test
