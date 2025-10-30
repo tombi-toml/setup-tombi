@@ -15,7 +15,7 @@ jobs:
     strategy:
       matrix:
         version:
-          - "1.0.0"
+          - "0.6.40"
           - "latest"
       fail-fast: false
     steps:
