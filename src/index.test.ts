@@ -22,8 +22,8 @@ vi.mock("child_process", () => ({
 
 describe("setup-tombi action", () => {
   const mockScriptPath = "/tmp/install.sh";
-  const mockBinPath = "/home/user/.local/bin";
-  const mockTombiBinPath = path.join(mockBinPath, "tombi");
+  const mockBinDirPath = "/home/user/.local/bin";
+  const mockTombiBinPath = path.join(mockBinDirPath, "tombi");
 
   beforeEach(() => {
     // Reset all mocks
