@@ -39,7 +39,9 @@ export async function run(): Promise<void> {
 
     // Verify checksum if provided
     if (checksum) {
-      const fileBuffer = await fs.promises.readFile(path.join(binPath, "tombi"));
+      const fileBuffer = await fs.promises.readFile(
+        path.join(binPath, "tombi"),
+      );
       const hashSum = createHash("sha256");
       hashSum.update(fileBuffer);
       const hex = hashSum.digest("hex");
