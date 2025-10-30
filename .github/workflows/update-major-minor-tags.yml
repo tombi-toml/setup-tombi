@@ -3,10 +3,10 @@ name: Update Major Minor Tags
 
 on:
   push:
-    branches-ignore:
-      - "**"
+    branches:
+      - main
     tags:
-      - "v*.*.*"
+      - v*
 
 jobs:
   update_major_minor_tags:
