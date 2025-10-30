@@ -70,7 +70,7 @@ describe("setup-tombi action", () => {
         stdio: "inherit",
       },
     );
-    expect(core.addPath).toHaveBeenCalledWith(mockTombiBinPath);
+    expect(core.addPath).toHaveBeenCalledWith(mockBinDirPath);
   });
 
   it("installs specific version of Tombi", async () => {
