@@ -8,12 +8,16 @@ This action sets up [Tombi](https://github.com/tombi-toml/tombi) in your GitHub 
 
 ```yaml
 - uses: tombi-toml/setup-tombi@v1
+  env:
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
 
 ### Install a specific version
 
 ```yaml
 - uses: tombi-toml/setup-tombi@v1
+  env:
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   with:
     version: '0.7.4'
 ```
@@ -22,6 +26,8 @@ This action sets up [Tombi](https://github.com/tombi-toml/tombi) in your GitHub 
 
 ```yaml
 - uses: tombi-toml/setup-tombi@v1
+  env:
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   with:
     version: '0.7.4'
     checksum: 'sha256-checksum-here'
@@ -53,6 +59,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: tombi-toml/setup-tombi@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           version: '0.7.4'
       - name: Validate TOML files
