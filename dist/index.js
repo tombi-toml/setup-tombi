@@ -28250,8 +28250,8 @@ async function run() {
         // Add Tombi to PATH
         // This needs to happen before we run the setup script, as the script will
         // check that `tombi` is in PATH.
-        const binPath = path.join(os.homedir(), ".local", "bin");
-        core.addPath(binPath);
+        const binDirPath = path.join(os.homedir(), ".local", "bin");
+        core.addPath(binDirPath);
         // Determine the download URL based on version and platform
         const baseUrl = "https://tombi-toml.github.io/tombi/install.sh";
         // Download the install script
@@ -28266,10 +28266,13 @@ async function run() {
         }
         core.info(`Installing Tombi${versionArgs.join("")}...`);
         core.info(`Execute: ${scriptPath}${versionArgs.join("")}`);
-        (0, node_child_process_1.execSync)(`${scriptPath}${versionArgs.join("")}`, { stdio: "inherit" });
+        (0, node_child_process_1.execSync)(`${scriptPath}${versionArgs.join(" ")}`, {
+            stdio: "inherit",
+            env: { ...process.env },
+        });
         // Verify checksum if provided
         if (checksum) {
-            const fileBuffer = await fs.promises.readFile(path.join(binPath, "tombi"));
+            const fileBuffer = await fs.promises.readFile(path.join(binDirPath, "tombi"));
             const hashSum = (0, node_crypto_1.createHash)("sha256");
             hashSum.update(fileBuffer);
             const hex = hashSum.digest("hex");

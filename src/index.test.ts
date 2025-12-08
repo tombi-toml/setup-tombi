@@ -68,6 +68,7 @@ describe("setup-tombi action", () => {
       `${mockScriptPath} --version latest`,
       {
         stdio: "inherit",
+        env: { ...process.env },
       },
     );
     expect(core.addPath).toHaveBeenCalledWith(mockBinDirPath);
@@ -130,7 +131,7 @@ describe("setup-tombi action", () => {
 
     expect(execSyncMock).toHaveBeenCalledWith(
       `${mockScriptPath} --version 0.3.31`,
-      { stdio: "inherit" },
+      { stdio: "inherit", env: { ...process.env } },
     );
     expect(fs.promises.readFile).toHaveBeenCalledWith(mockTombiBinPath);
   });
