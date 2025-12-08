@@ -21,7 +21,11 @@ export async function run(): Promise<void> {
     const baseUrl = "https://tombi-toml.github.io/tombi/install.sh";
 
     if (process.env.GITHUB_TOKEN) {
-      core.info("GITHUB_TOKEN is available");
+      core.info("GITHUB_TOKEN is set.");
+    } else {
+      core.warning(
+        "GITHUB_TOKEN is not set. To increase the GitHub API rate limit for fetching the latest release in install.sh, please provide a GITHUB_TOKEN.",
+      );
     }
 
     // Download the install script
