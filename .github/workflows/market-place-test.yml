@@ -21,7 +21,7 @@ jobs:
     steps:
       - uses: tombi-toml/setup-tombi@v1.0.4
         env:
-          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           version: ${{ matrix.version }}
       - run: tombi --version

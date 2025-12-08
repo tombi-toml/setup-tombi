@@ -24,7 +24,7 @@ export async function run(): Promise<void> {
       core.info("GITHUB_TOKEN is set.");
     } else {
       core.info(
-        "GITHUB_TOKEN is not set. To increase the GitHub API rate limit for fetching the latest release in install.sh, please provide a GITHUB_TOKEN.",
+        "GITHUB_TOKEN is not set. To increase the GitHub API rate limit for fetching the latest release in install.sh, please provide `secrets.GITHUB_TOKEN` in the env.",
       );
     }
 
