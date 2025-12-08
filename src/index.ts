@@ -23,7 +23,7 @@ export async function run(): Promise<void> {
     if (process.env.GITHUB_TOKEN) {
       core.info("GITHUB_TOKEN is set.");
     } else {
-      core.warning(
+      core.info(
         "GITHUB_TOKEN is not set. To increase the GitHub API rate limit for fetching the latest release in install.sh, please provide a GITHUB_TOKEN.",
       );
     }
