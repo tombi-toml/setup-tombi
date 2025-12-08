@@ -20,6 +20,10 @@ export async function run(): Promise<void> {
     // Determine the download URL based on version and platform
     const baseUrl = "https://tombi-toml.github.io/tombi/install.sh";
 
+    if (process.env.GITHUB_TOKEN) {
+      core.info("GITHUB_TOKEN is available");
+    }
+
     // Download the install script
     core.info("Downloading Tombi install script...");
     const scriptPath = await tc.downloadTool(baseUrl);
@@ -35,7 +39,10 @@ export async function run(): Promise<void> {
 
     core.info(`Installing Tombi${versionArgs.join("")}...`);
     core.info(`Execute: ${scriptPath}${versionArgs.join("")}`);
-    execSync(`${scriptPath}${versionArgs.join("")}`, { stdio: "inherit" });
+    execSync(`${scriptPath}${versionArgs.join(" ")}`, {
+      stdio: "inherit",
+      env: { ...process.env },
+    });
 
     // Verify checksum if provided
     if (checksum) {
