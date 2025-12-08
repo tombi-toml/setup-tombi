@@ -28254,11 +28254,8 @@ async function run() {
         core.addPath(binDirPath);
         // Determine the download URL based on version and platform
         const baseUrl = "https://tombi-toml.github.io/tombi/install.sh";
-        if (process.env.GITHUB_TOKEN) {
-            core.info("GITHUB_TOKEN is set.");
-        }
-        else {
-            core.info("GITHUB_TOKEN is not set. To increase the GitHub API rate limit for fetching the latest release in install.sh, please provide `secrets.GITHUB_TOKEN` in the env.");
+        if (!process.env.GITHUB_TOKEN) {
+            core.warning("GITHUB_TOKEN is not set. To increase the GitHub API rate limit for fetching the latest release in install.sh, please provide `secrets.GITHUB_TOKEN` in the env.");
         }
         // Download the install script
         core.info("Downloading Tombi install script...");
