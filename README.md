@@ -19,7 +19,7 @@ This action sets up [Tombi](https://github.com/tombi-toml/tombi) in your GitHub 
   env:
     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   with:
-    version: '0.7.5'
+    version: '0.7.6'
 ```
 
 ### Install with checksum verification
@@ -29,7 +29,7 @@ This action sets up [Tombi](https://github.com/tombi-toml/tombi) in your GitHub 
   env:
     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   with:
-    version: '0.7.5'
+    version: '0.7.6'
     checksum: 'sha256-checksum-here'
 ```
 
@@ -37,7 +37,7 @@ This action sets up [Tombi](https://github.com/tombi-toml/tombi) in your GitHub 
 
 | Name | Description | Required | Default |
 |------|-------------|----------|---------|
-| `version` | Version of Tombi to install (e.g., "0.7.5", "latest") | No | - |
+| `version` | Version of Tombi to install (e.g., "0.7.6", "latest") | No | - |
 | `checksum` | SHA256 checksum to validate the downloaded executable | No | - |
 
 ## Example workflow
@@ -62,7 +62,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          version: '0.7.5'
+          version: '0.7.6'
       - name: Validate TOML files
         run: tombi lint
 ```
