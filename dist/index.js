@@ -28247,35 +28247,65 @@ function isWindows() {
     return os.platform() === "win32";
 }
 function getInstallDir() {
-    // install.sh always installs to ~/.local/bin
     return path.join(os.homedir(), ".local", "bin");
 }
 function getBinaryName() {
     return isWindows() ? "tombi.exe" : "tombi";
 }
+async function installWithScript(version) {
+    const installScriptUrl = "https://tombi-toml.github.io/tombi/install.sh";
+    core.info("Downloading Tombi install script...");
+    const scriptPath = await tc.downloadTool(installScriptUrl);
+    const versionArg = version ? `--version ${version}` : "";
+    const command = `bash "${scriptPath}" ${versionArg}`.trim();
+    core.info(`Execute: ${command}`);
+    (0, node_child_process_1.execSync)(command, { stdio: "inherit" });
+}
+async function installDirect(version) {
+    const arch = os.arch() === "arm64" ? "aarch64" : "x86_64";
+    const target = `${arch}-pc-windows-msvc`;
+    const downloadUrl = `https://github.com/tombi-toml/tombi/releases/download/v${version}/tombi-cli-${version}-${target}.zip`;
+    core.info(`Downloading from: ${downloadUrl}`);
+    const archivePath = await tc.downloadTool(downloadUrl);
+    const installDir = getInstallDir();
+    await fs.promises.mkdir(installDir, { recursive: true });
+    core.info(`Extracting to: ${installDir}`);
+    await tc.extractZip(archivePath, installDir);
+}
+async function getLatestVersion() {
+    const response = await fetch("https://api.github.com/repos/tombi-toml/tombi/releases/latest", {
+        headers: {
+            Accept: "application/vnd.github.v3+json",
+            "User-Agent": "setup-tombi",
+        },
+    });
+    if (!response.ok) {
+        throw new Error(`Failed to fetch latest version: ${response.statusText}`);
+    }
+    const data = (await response.json());
+    return data.tag_name.replace(/^v/, "");
+}
 async function run() {
     try {
-        const version = core.getInput("version");
+        let version = core.getInput("version");
         const checksum = core.getInput("checksum") || undefined;
-        // Add to PATH first (install.sh may check this)
+        // Resolve version if needed
+        if (!version || version === "latest") {
+            core.info("Fetching latest version...");
+            version = await getLatestVersion();
+        }
+        core.info(`Installing Tombi version ${version}...`);
+        // Add to PATH
         const installDir = getInstallDir();
         core.addPath(installDir);
-        // Download the install script
-        const installScriptUrl = "https://tombi-toml.github.io/tombi/install.sh";
-        core.info("Downloading Tombi install script...");
-        const scriptPath = await tc.downloadTool(installScriptUrl);
-        // Build version argument
-        const versionArg = version ? `--version ${version}` : "";
-        // Execute the install script using bash
-        core.info(`Installing Tombi${version ? ` version ${version}` : ""}...`);
-        const command = `bash "${scriptPath}" ${versionArg}`.trim();
-        core.info(`Execute: ${command}`);
-        try {
-            (0, node_child_process_1.execSync)(command, { stdio: "inherit" });
+        // Install based on platform
+        if (isWindows()) {
+            // Direct download for Windows (install.sh has bugs with .zip files)
+            await installDirect(version);
         }
-        catch {
-            // install.sh may exit with non-zero even on success (known issue on Windows)
-            core.warning("Install script exited with non-zero code, checking if binary exists...");
+        else {
+            // Use install.sh for Linux/macOS
+            await installWithScript(version);
         }
         const binaryPath = path.join(installDir, getBinaryName());
         // Verify binary exists
