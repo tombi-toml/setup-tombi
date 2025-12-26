@@ -40,12 +40,15 @@ jobs:
         run: pnpm install
 
       - name: Check formatting
+        if: matrix.os == 'ubuntu-latest'
         run: pnpm run format-check
 
       - name: Check linting
+        if: matrix.os == 'ubuntu-latest'
         run: pnpm run lint-check
 
       - name: Run unit tests
+        if: matrix.os == 'ubuntu-latest'
         run: pnpm run test
 
       - name: Build
