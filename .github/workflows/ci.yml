@@ -60,6 +60,8 @@ jobs:
         uses: ./
         with:
           version: latest
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Verify tombi is installed
         run: tombi --version
@@ -69,6 +71,8 @@ jobs:
         uses: ./
         with:
           version: "0.7.11"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Verify specific version is installed
         run: |

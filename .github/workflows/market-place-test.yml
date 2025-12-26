@@ -28,6 +28,8 @@ jobs:
       - uses: tombi-toml/setup-tombi@v1
         with:
           version: ${{ matrix.version }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Verify tombi is installed
         run: tombi --version
