@@ -28243,39 +28243,43 @@ const os = __importStar(__nccwpck_require__(8161));
 const fs = __importStar(__nccwpck_require__(3024));
 const node_crypto_1 = __nccwpck_require__(7598);
 const node_child_process_1 = __nccwpck_require__(1421);
+function isWindows() {
+    return os.platform() === "win32";
+}
+function getInstallDir() {
+    if (isWindows()) {
+        const localAppData = process.env.LOCALAPPDATA;
+        if (localAppData) {
+            return path.join(localAppData, "tombi", "bin");
+        }
+        return path.join(os.homedir(), ".tombi", "bin");
+    }
+    return path.join(os.homedir(), ".local", "bin");
+}
+function getBinaryName() {
+    return isWindows() ? "tombi.exe" : "tombi";
+}
 async function run() {
     try {
         const version = core.getInput("version");
         const checksum = core.getInput("checksum") || undefined;
-        // Add Tombi to PATH
-        // This needs to happen before we run the setup script, as the script will
-        // check that `tombi` is in PATH.
-        const binDirPath = path.join(os.homedir(), ".local", "bin");
-        core.addPath(binDirPath);
-        // Determine the download URL based on version and platform
-        const baseUrl = "https://tombi-toml.github.io/tombi/install.sh";
-        if (!process.env.GITHUB_TOKEN) {
-            core.warning("GITHUB_TOKEN is not set. To increase the GitHub API rate limit for fetching the latest release in install.sh, please provide `secrets.GITHUB_TOKEN` in the env.");
-        }
         // Download the install script
+        const installScriptUrl = "https://tombi-toml.github.io/tombi/install.sh";
         core.info("Downloading Tombi install script...");
-        const scriptPath = await tc.downloadTool(baseUrl);
-        // Make the script executable
-        await fs.promises.chmod(scriptPath, "755");
-        // Execute the install script with appropriate version if specified
-        const versionArgs = [];
-        if (version) {
-            versionArgs.push(` --version ${version}`);
-        }
-        core.info(`Installing Tombi${versionArgs.join("")}...`);
-        core.info(`Execute: ${scriptPath}${versionArgs.join("")}`);
-        (0, node_child_process_1.execSync)(`${scriptPath}${versionArgs.join(" ")}`, {
-            stdio: "inherit",
-            env: { ...process.env },
-        });
-        // Verify checksum if provided
+        const scriptPath = await tc.downloadTool(installScriptUrl);
+        // Build version argument
+        const versionArg = version ? `--version ${version}` : "";
+        // Execute the install script using bash
+        core.info(`Installing Tombi${version ? ` version ${version}` : ""}...`);
+        const command = `bash "${scriptPath}" ${versionArg}`.trim();
+        core.info(`Execute: ${command}`);
+        (0, node_child_process_1.execSync)(command, { stdio: "inherit" });
+        // Add to PATH
+        const installDir = getInstallDir();
+        core.addPath(installDir);
+        const binaryPath = path.join(installDir, getBinaryName());
         if (checksum) {
-            const fileBuffer = await fs.promises.readFile(path.join(binDirPath, "tombi"));
+            const fileBuffer = await fs.promises.readFile(binaryPath);
             const hashSum = (0, node_crypto_1.createHash)("sha256");
             hashSum.update(fileBuffer);
             const hex = hashSum.digest("hex");
@@ -28284,7 +28288,13 @@ async function run() {
             }
             core.info("Checksum verification passed");
         }
-        core.info("Tombi installed successfully");
+        const versionOutput = (0, node_child_process_1.execSync)(`"${binaryPath}" --version`, {
+            encoding: "utf8",
+        });
+        if (!versionOutput) {
+            throw new Error("Failed to verify installation: no version output");
+        }
+        core.info(`Tombi installed successfully: ${versionOutput.trim()}`);
     }
     catch (error) {
         if (error instanceof Error) {

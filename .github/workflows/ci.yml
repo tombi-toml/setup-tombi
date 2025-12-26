@@ -2,16 +2,28 @@ name: CI
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   pull_request:
-    branches:
-      - main
+    branches: [main]
   workflow_dispatch:
 
 jobs:
   ci:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            name: Linux x64
+          - os: macos-latest
+            name: macOS arm64
+          - os: macos-13
+            name: macOS x64
+          - os: windows-latest
+            name: Windows x64
+      fail-fast: false
+
+    runs-on: ${{ matrix.os }}
+    name: Test (${{ matrix.name }})
 
     steps:
       - uses: actions/checkout@v4
@@ -30,10 +42,40 @@ jobs:
         run: pnpm install
 
       - name: Check formatting
+        if: matrix.os == 'ubuntu-latest'
         run: pnpm run format-check
 
       - name: Check linting
+        if: matrix.os == 'ubuntu-latest'
         run: pnpm run lint-check
 
-      - name: Run tests
+      - name: Run unit tests
+        if: matrix.os == 'ubuntu-latest'
         run: pnpm run test
+
+      - name: Build
+        run: pnpm run build
+
+      - name: Test action with latest version
+        uses: ./
+        with:
+          version: latest
+
+      - name: Verify tombi is installed
+        run: tombi --version
+        shell: bash
+
+      - name: Test action with specific version
+        uses: ./
+        with:
+          version: "0.7.11"
+
+      - name: Verify specific version is installed
+        run: |
+          VERSION=$(tombi --version)
+          echo "Installed version: $VERSION"
+          if [[ "$VERSION" != *"0.7.11"* ]]; then
+            echo "Expected version 0.7.11 but got $VERSION"
+            exit 1
+          fi
+        shell: bash
