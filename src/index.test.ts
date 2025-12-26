@@ -15,7 +15,6 @@ vi.mock("node:fs", async () => {
     ...actual,
     existsSync: vi.fn(),
     promises: {
-      mkdir: vi.fn(),
       readFile: vi.fn(),
     },
   };
@@ -30,32 +29,19 @@ vi.mock("child_process", () => ({
   execSync: execSyncMock,
 }));
 
-// Mock global fetch
-const fetchMock = vi.fn();
-global.fetch = fetchMock;
-
 describe("setup-tombi action", () => {
   const mockScriptPath = "/tmp/install.sh";
-  const mockArchivePath = "/tmp/tombi.zip";
 
   beforeEach(() => {
     vi.resetAllMocks();
 
     vi.mocked(os.platform).mockReturnValue("linux");
-    vi.mocked(os.arch).mockReturnValue("x64");
     vi.mocked(os.homedir).mockReturnValue("/home/user");
 
     vi.mocked(tc.downloadTool).mockResolvedValue(mockScriptPath);
-    vi.mocked(tc.extractZip).mockResolvedValue("/tmp/extracted");
     vi.mocked(fs.existsSync).mockReturnValue(true);
-    vi.mocked(fs.promises.mkdir).mockResolvedValue(undefined);
 
     execSyncMock.mockReturnValue("tombi 0.7.11\n");
-
-    fetchMock.mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve({ tag_name: "v0.7.11" }),
-    });
 
     vi.mocked(core.getInput).mockImplementation((name: string) => {
       switch (name) {
@@ -73,8 +59,8 @@ describe("setup-tombi action", () => {
     vi.resetAllMocks();
   });
 
-  describe("Linux/macOS", () => {
-    it("uses install.sh script", async () => {
+  describe("Linux", () => {
+    it("uses install.sh script with install-dir", async () => {
       const { run } = await import("./index");
       await run();
 
@@ -82,17 +68,17 @@ describe("setup-tombi action", () => {
         "https://tombi-toml.github.io/tombi/install.sh",
       );
       expect(execSyncMock).toHaveBeenCalledWith(
-        `bash "${mockScriptPath}" --version 0.7.11`,
+        `bash "${mockScriptPath}" --version latest --install-dir "/home/user/.local/bin"`,
         { stdio: "inherit" },
       );
       expect(core.addPath).toHaveBeenCalledWith("/home/user/.local/bin");
     });
 
-    it("installs specific version", async () => {
+    it("installs without version arg when not specified", async () => {
       vi.mocked(core.getInput).mockImplementation((name: string) => {
         switch (name) {
           case "version":
-            return "0.7.0";
+            return "";
           default:
             return "";
         }
@@ -102,7 +88,7 @@ describe("setup-tombi action", () => {
       await run();
 
       expect(execSyncMock).toHaveBeenCalledWith(
-        `bash "${mockScriptPath}" --version 0.7.0`,
+        `bash "${mockScriptPath}" --install-dir "/home/user/.local/bin"`,
         { stdio: "inherit" },
       );
     });
@@ -111,32 +97,16 @@ describe("setup-tombi action", () => {
   describe("Windows", () => {
     beforeEach(() => {
       vi.mocked(os.platform).mockReturnValue("win32");
-      vi.mocked(os.arch).mockReturnValue("x64");
       vi.mocked(os.homedir).mockReturnValue("C:\\Users\\user");
-      vi.mocked(tc.downloadTool).mockResolvedValue(mockArchivePath);
     });
 
-    it("downloads zip directly instead of using install.sh", async () => {
+    it("uses bash to execute install.sh", async () => {
       const { run } = await import("./index");
       await run();
 
-      expect(tc.downloadTool).toHaveBeenCalledWith(
-        "https://github.com/tombi-toml/tombi/releases/download/v0.7.11/tombi-cli-0.7.11-x86_64-pc-windows-msvc.zip",
-      );
-      expect(tc.extractZip).toHaveBeenCalledWith(
-        mockArchivePath,
-        path.join("C:\\Users\\user", ".local", "bin"),
-      );
-    });
-
-    it("uses aarch64 for arm64", async () => {
-      vi.mocked(os.arch).mockReturnValue("arm64");
-
-      const { run } = await import("./index");
-      await run();
-
-      expect(tc.downloadTool).toHaveBeenCalledWith(
-        "https://github.com/tombi-toml/tombi/releases/download/v0.7.11/tombi-cli-0.7.11-aarch64-pc-windows-msvc.zip",
+      expect(execSyncMock).toHaveBeenCalledWith(
+        expect.stringContaining(`bash "${mockScriptPath}"`),
+        { stdio: "inherit" },
       );
     });
 
@@ -146,6 +116,26 @@ describe("setup-tombi action", () => {
 
       expect(core.addPath).toHaveBeenCalledWith(
         path.join("C:\\Users\\user", ".local", "bin"),
+      );
+    });
+  });
+
+  describe("macOS", () => {
+    beforeEach(() => {
+      vi.mocked(os.platform).mockReturnValue("darwin");
+      vi.mocked(os.homedir).mockReturnValue("/Users/user");
+    });
+
+    it("uses install.sh script", async () => {
+      const { run } = await import("./index");
+      await run();
+
+      expect(tc.downloadTool).toHaveBeenCalledWith(
+        "https://tombi-toml.github.io/tombi/install.sh",
+      );
+      expect(execSyncMock).toHaveBeenCalledWith(
+        `bash "${mockScriptPath}" --version latest --install-dir "/Users/user/.local/bin"`,
+        { stdio: "inherit" },
       );
     });
   });
@@ -223,20 +213,6 @@ describe("setup-tombi action", () => {
 
       expect(core.setFailed).toHaveBeenCalledWith(
         expect.stringContaining("Binary not found"),
-      );
-    });
-
-    it("handles fetch error for latest version", async () => {
-      fetchMock.mockResolvedValue({
-        ok: false,
-        statusText: "Not Found",
-      });
-
-      const { run } = await import("./index");
-      await run();
-
-      expect(core.setFailed).toHaveBeenCalledWith(
-        "Failed to fetch latest version: Not Found",
       );
     });
   });
