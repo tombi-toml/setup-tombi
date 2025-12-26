@@ -3,7 +3,7 @@ description: "Set up your GitHub Actions workflow with a specific version of Tom
 author: "tombi-toml"
 inputs:
   version:
-    description: 'Version of Tombi to install (e.g., "0.3.31", "latest")'
+    description: 'Version of Tombi to install (e.g., "0.7.11", "latest")'
     required: false
   checksum:
     description: "SHA256 checksum to validate the downloaded executable"
