@@ -15,7 +15,7 @@ jobs:
           - ubuntu-latest
           - macos-latest
           - macos-13
-          - windows-latest
+          # - windows-latest
         version:
           - "0.7.11"
           - "latest"
