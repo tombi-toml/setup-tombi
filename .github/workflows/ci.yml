@@ -16,8 +16,6 @@ jobs:
             name: Linux x64
           - os: macos-latest
             name: macOS arm64
-          - os: macos-13
-            name: macOS x64
           - os: windows-latest
             name: Windows x64
       fail-fast: false
