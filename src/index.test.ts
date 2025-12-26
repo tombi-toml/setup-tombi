@@ -9,7 +9,16 @@ import { createHash } from "node:crypto";
 // Mock the modules
 vi.mock("@actions/core");
 vi.mock("@actions/tool-cache");
-vi.mock("fs");
+vi.mock("node:fs", async () => {
+  const actual = await vi.importActual("node:fs");
+  return {
+    ...actual,
+    existsSync: vi.fn(),
+    promises: {
+      readFile: vi.fn(),
+    },
+  };
+});
 vi.mock("os");
 
 // Create mock for execSync
@@ -30,6 +39,7 @@ describe("setup-tombi action", () => {
     vi.mocked(os.homedir).mockReturnValue("/home/user");
 
     vi.mocked(tc.downloadTool).mockResolvedValue(mockScriptPath);
+    vi.mocked(fs.existsSync).mockReturnValue(true);
 
     execSyncMock.mockReturnValue("tombi 0.7.11\n");
 
@@ -77,21 +87,23 @@ describe("setup-tombi action", () => {
       const { run } = await import("./index");
       await run();
 
-      expect(execSyncMock).toHaveBeenCalledWith(
-        `bash "${mockScriptPath}"`,
-        { stdio: "inherit" },
-      );
+      expect(execSyncMock).toHaveBeenCalledWith(`bash "${mockScriptPath}"`, {
+        stdio: "inherit",
+      });
+    });
+
+    it("uses ~/.local/bin for install directory", async () => {
+      const { run } = await import("./index");
+      await run();
+
+      expect(core.addPath).toHaveBeenCalledWith("/home/user/.local/bin");
     });
   });
 
   describe("Windows", () => {
     beforeEach(() => {
       vi.mocked(os.platform).mockReturnValue("win32");
-      process.env.LOCALAPPDATA = "C:\\Users\\user\\AppData\\Local";
-    });
-
-    afterEach(() => {
-      process.env.LOCALAPPDATA = undefined;
+      vi.mocked(os.homedir).mockReturnValue("C:\\Users\\user");
     });
 
     it("uses bash to execute install script on Windows", async () => {
@@ -104,12 +116,30 @@ describe("setup-tombi action", () => {
       );
     });
 
-    it("uses LOCALAPPDATA for install directory", async () => {
+    it("uses ~/.local/bin for install directory on Windows too", async () => {
       const { run } = await import("./index");
       await run();
 
       expect(core.addPath).toHaveBeenCalledWith(
-        path.join("C:\\Users\\user\\AppData\\Local", "tombi", "bin"),
+        path.join("C:\\Users\\user", ".local", "bin"),
+      );
+    });
+
+    it("continues if install script fails but binary exists", async () => {
+      execSyncMock
+        .mockImplementationOnce(() => {
+          throw new Error("Script failed");
+        })
+        .mockReturnValue("tombi 0.7.11\n");
+
+      const { run } = await import("./index");
+      await run();
+
+      expect(core.warning).toHaveBeenCalledWith(
+        "Install script exited with non-zero code, checking if binary exists...",
+      );
+      expect(core.info).toHaveBeenCalledWith(
+        "Tombi installed successfully: tombi 0.7.11",
       );
     });
   });
@@ -177,6 +207,17 @@ describe("setup-tombi action", () => {
       await run();
 
       expect(core.setFailed).toHaveBeenCalledWith(mockError.message);
+    });
+
+    it("fails if binary not found after install", async () => {
+      vi.mocked(fs.existsSync).mockReturnValue(false);
+
+      const { run } = await import("./index");
+      await run();
+
+      expect(core.setFailed).toHaveBeenCalledWith(
+        expect.stringContaining("Binary not found"),
+      );
     });
   });
 });

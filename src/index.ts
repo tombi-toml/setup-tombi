@@ -11,13 +11,7 @@ function isWindows(): boolean {
 }
 
 function getInstallDir(): string {
-  if (isWindows()) {
-    const localAppData = process.env.LOCALAPPDATA;
-    if (localAppData) {
-      return path.join(localAppData, "tombi", "bin");
-    }
-    return path.join(os.homedir(), ".tombi", "bin");
-  }
+  // install.sh always installs to ~/.local/bin
   return path.join(os.homedir(), ".local", "bin");
 }
 
@@ -29,6 +23,10 @@ export async function run(): Promise<void> {
   try {
     const version = core.getInput("version");
     const checksum = core.getInput("checksum") || undefined;
+
+    // Add to PATH first (install.sh may check this)
+    const installDir = getInstallDir();
+    core.addPath(installDir);
 
     // Download the install script
     const installScriptUrl = "https://tombi-toml.github.io/tombi/install.sh";
@@ -42,13 +40,20 @@ export async function run(): Promise<void> {
     core.info(`Installing Tombi${version ? ` version ${version}` : ""}...`);
     const command = `bash "${scriptPath}" ${versionArg}`.trim();
     core.info(`Execute: ${command}`);
-    execSync(command, { stdio: "inherit" });
 
-    // Add to PATH
-    const installDir = getInstallDir();
-    core.addPath(installDir);
+    try {
+      execSync(command, { stdio: "inherit" });
+    } catch {
+      // install.sh may exit with non-zero even on success (known issue on Windows)
+      core.warning("Install script exited with non-zero code, checking if binary exists...");
+    }
 
     const binaryPath = path.join(installDir, getBinaryName());
+
+    // Verify binary exists
+    if (!fs.existsSync(binaryPath)) {
+      throw new Error(`Binary not found at ${binaryPath}`);
+    }
 
     if (checksum) {
       const fileBuffer = await fs.promises.readFile(binaryPath);
