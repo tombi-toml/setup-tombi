@@ -2,7 +2,7 @@ import {
   TYPESCRIPT_PACKAGE_ALIASES,
   cleanResolvedVersion,
   escapeRegex,
-} from "./index";
+} from "./common";
 
 function getBunPackagePattern(packageName: string): RegExp {
   return new RegExp(

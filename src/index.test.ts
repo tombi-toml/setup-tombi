@@ -22,6 +22,9 @@ vi.mock("node:fs", async () => {
 });
 
 vi.mock("node:os");
+vi.mock("./lockfile", () => ({
+  resolveVersionFromLockfile: vi.fn(),
+}));
 
 // Create mock for execSync
 const execSyncMock = vi.fn();
@@ -60,7 +63,7 @@ describe("setup-tombi action", () => {
     await run();
   }
 
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.resetModules();
     vi.resetAllMocks();
 
@@ -71,6 +74,11 @@ describe("setup-tombi action", () => {
     vi.mocked(fs.existsSync).mockReturnValue(true);
     vi.mocked(fs.promises.readFile).mockResolvedValue(
       Buffer.from("mock-content"),
+    );
+
+    const lockfileModule = await import("./lockfile");
+    vi.mocked(lockfileModule.resolveVersionFromLockfile).mockResolvedValue(
+      "0.7.11",
     );
 
     execSyncMock.mockReturnValue("tombi 0.7.11\n");
@@ -100,6 +108,24 @@ describe("setup-tombi action", () => {
 
       expect(execSyncMock).toHaveBeenCalledWith(
         `bash "${mockScriptPath}" --install-dir "/home/user/.local/bin"`,
+        { stdio: "inherit" },
+      );
+    });
+
+    it("resolves version from lockfile when lockfile is specified", async () => {
+      const lockfileModule = await import("./lockfile");
+      vi.mocked(lockfileModule.resolveVersionFromLockfile).mockResolvedValue(
+        "0.7.33",
+      );
+      setInputs({ version: "", lockfile: "pnpm-lock.yaml" });
+
+      await runAction();
+
+      expect(lockfileModule.resolveVersionFromLockfile).toHaveBeenCalledWith(
+        "pnpm-lock.yaml",
+      );
+      expect(execSyncMock).toHaveBeenCalledWith(
+        `bash "${mockScriptPath}" --version 0.7.33 --install-dir "/home/user/.local/bin"`,
         { stdio: "inherit" },
       );
     });
@@ -197,6 +223,18 @@ describe("setup-tombi action", () => {
 
       expect(core.setFailed).toHaveBeenCalledWith(
         expect.stringContaining("Binary not found"),
+      );
+    });
+
+    it("fails when version and lockfile are both provided", async () => {
+      const lockfileModule = await import("./lockfile");
+      setInputs({ version: "latest", lockfile: "pnpm-lock.yaml" });
+
+      await runAction();
+
+      expect(lockfileModule.resolveVersionFromLockfile).not.toHaveBeenCalled();
+      expect(core.setFailed).toHaveBeenCalledWith(
+        "Inputs `version` and `lockfile` are mutually exclusive.",
       );
     });
   });

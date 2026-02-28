@@ -2,7 +2,7 @@ import {
   TYPESCRIPT_PACKAGE_ALIASES,
   cleanResolvedVersion,
   escapeRegex,
-} from "./index";
+} from "./common";
 
 function getYarnAliasSelectorPattern(packageName: string): RegExp {
   return new RegExp(String.raw`(^|[\s,"'])${escapeRegex(packageName)}@`);
