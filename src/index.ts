@@ -5,6 +5,7 @@ import * as os from "node:os";
 import * as fs from "node:fs";
 import { createHash } from "node:crypto";
 import { execSync } from "node:child_process";
+import { resolveVersionFromLockfile } from "./lockfile";
 
 function isWindows(): boolean {
   return os.platform() === "win32";
@@ -18,10 +19,35 @@ function getBinaryName(): string {
   return isWindows() ? "tombi.exe" : "tombi";
 }
 
+async function resolveRequestedVersion(
+  versionInput: string,
+  lockfileInput: string,
+): Promise<string | undefined> {
+  if (versionInput && lockfileInput) {
+    throw new Error("Inputs `version` and `lockfile` are mutually exclusive.");
+  }
+
+  if (versionInput) {
+    return versionInput;
+  }
+
+  if (lockfileInput) {
+    const resolvedVersion = await resolveVersionFromLockfile(lockfileInput);
+    core.info(
+      `Resolved Tombi version ${resolvedVersion} from ${lockfileInput}`,
+    );
+    return resolvedVersion;
+  }
+
+  return undefined;
+}
+
 export async function run(): Promise<void> {
   try {
-    const version = core.getInput("version");
+    const versionInput = core.getInput("version").trim();
+    const lockfileInput = core.getInput("lockfile").trim();
     const checksum = core.getInput("checksum") || undefined;
+    const version = await resolveRequestedVersion(versionInput, lockfileInput);
 
     // Add to PATH first
     const installDir = getInstallDir();
@@ -82,4 +108,6 @@ export async function run(): Promise<void> {
   }
 }
 
-run();
+if (process.env.NODE_ENV !== "test") {
+  void run();
+}

@@ -1,9 +1,12 @@
 name: "Setup Tombi"
-description: "Set up your GitHub Actions workflow with a specific version of Tombi"
+description: "Set up your GitHub Actions workflow with Tombi"
 author: "tombi-toml"
 inputs:
   version:
-    description: 'Version of Tombi to install (e.g., "0.7.11", "latest")'
+    description: 'Version of Tombi to install (e.g., "0.7.11", "latest"). Mutually exclusive with lockfile.'
+    required: false
+  lockfile:
+    description: "Path to a lock file used to resolve the Tombi version (uv.lock, poetry.lock, pnpm-lock.yaml, package-lock.json, yarn.lock, bun.lock). Mutually exclusive with version."
     required: false
   checksum:
     description: "SHA256 checksum to validate the downloaded executable"

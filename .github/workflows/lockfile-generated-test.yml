@@ -1,0 +1,71 @@
+name: Lockfile Generated Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  lockfile-generated-test:
+    name: Lockfile Test (${{ matrix.manager }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        manager:
+          - uv
+          - poetry
+          - pnpm
+          - npm
+          - yarn
+          - bun
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: ".node-version"
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          run_install: false
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Setup Python
+        if: matrix.manager == 'uv' || matrix.manager == 'poetry'
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Setup uv
+        if: matrix.manager == 'uv'
+        uses: astral-sh/setup-uv@v5
+
+      - name: Setup Poetry
+        if: matrix.manager == 'poetry'
+        uses: snok/install-poetry@v1
+        with:
+          version: latest
+
+      - name: Setup Yarn
+        if: matrix.manager == 'yarn'
+        run: |
+          corepack enable
+          corepack prepare yarn@1.22.22 --activate
+
+      - name: Setup Bun
+        if: matrix.manager == 'bun'
+        uses: oven-sh/setup-bun@v2
+
+      - name: Run generated lockfile parser test
+        env:
+          LOCKFILE_GENERATION_TEST: "1"
+        run: pnpm run test:lockfile-generated:${{ matrix.manager }}
+
