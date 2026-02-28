@@ -28243,6 +28243,7 @@ const os = __importStar(__nccwpck_require__(8161));
 const fs = __importStar(__nccwpck_require__(3024));
 const node_crypto_1 = __nccwpck_require__(7598);
 const node_child_process_1 = __nccwpck_require__(1421);
+const lockfile_1 = __nccwpck_require__(2823);
 function isWindows() {
     return os.platform() === "win32";
 }
@@ -28252,10 +28253,26 @@ function getInstallDir() {
 function getBinaryName() {
     return isWindows() ? "tombi.exe" : "tombi";
 }
+async function resolveRequestedVersion(versionInput, lockfileInput) {
+    if (versionInput && lockfileInput) {
+        throw new Error("Inputs `version` and `lockfile` are mutually exclusive.");
+    }
+    if (versionInput) {
+        return versionInput;
+    }
+    if (lockfileInput) {
+        const resolvedVersion = await (0, lockfile_1.resolveVersionFromLockfile)(lockfileInput);
+        core.info(`Resolved Tombi version ${resolvedVersion} from ${lockfileInput}`);
+        return resolvedVersion;
+    }
+    return undefined;
+}
 async function run() {
     try {
-        const version = core.getInput("version");
+        const versionInput = core.getInput("version").trim();
+        const lockfileInput = core.getInput("lockfile").trim();
         const checksum = core.getInput("checksum") || undefined;
+        const version = await resolveRequestedVersion(versionInput, lockfileInput);
         // Add to PATH first
         const installDir = getInstallDir();
         core.addPath(installDir);
@@ -28306,7 +28323,458 @@ async function run() {
         }
     }
 }
-run();
+if (process.env.NODE_ENV !== "test") {
+    void run();
+}
+
+
+/***/ }),
+
+/***/ 1348:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.extractVersionFromBunLock = extractVersionFromBunLock;
+const index_1 = __nccwpck_require__(2823);
+function getBunPackagePattern(packageName) {
+    return new RegExp(String.raw `${(0, index_1.escapeRegex)(packageName)}@([0-9][0-9A-Za-z.+-]*)`);
+}
+function matchBunPackageVersion(content, packageName) {
+    const packageMatch = content.match(getBunPackagePattern(packageName));
+    if (packageMatch?.[1]) {
+        return (0, index_1.cleanResolvedVersion)(packageMatch[1]);
+    }
+    return undefined;
+}
+function extractVersionFromBunLock(content) {
+    for (const packageName of index_1.TYPESCRIPT_PACKAGE_ALIASES) {
+        const version = matchBunPackageVersion(content, packageName);
+        if (version) {
+            return version;
+        }
+    }
+    return undefined;
+}
+
+
+/***/ }),
+
+/***/ 2823:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.SUPPORTED_LOCKFILES = exports.TYPESCRIPT_LOCKFILE_KINDS = exports.PYTHON_LOCKFILE_KINDS = exports.TYPESCRIPT_PACKAGE_ALIASES = exports.PYTHON_PACKAGE_ALIASES = void 0;
+exports.escapeRegex = escapeRegex;
+exports.asRecord = asRecord;
+exports.getIndent = getIndent;
+exports.isTargetPackage = isTargetPackage;
+exports.cleanResolvedVersion = cleanResolvedVersion;
+exports.detectLockfileKind = detectLockfileKind;
+exports.packageNotFoundError = packageNotFoundError;
+exports.extractVersionByKind = extractVersionByKind;
+exports.resolveVersionFromLockfile = resolveVersionFromLockfile;
+const fs = __importStar(__nccwpck_require__(3024));
+const path = __importStar(__nccwpck_require__(6760));
+const uv_lock_1 = __nccwpck_require__(2802);
+const poetry_lock_1 = __nccwpck_require__(292);
+const pnpm_lock_1 = __nccwpck_require__(2832);
+const package_lock_1 = __nccwpck_require__(4195);
+const yarn_lock_1 = __nccwpck_require__(2081);
+const bun_lock_1 = __nccwpck_require__(1348);
+exports.PYTHON_PACKAGE_ALIASES = ["tombi"];
+exports.TYPESCRIPT_PACKAGE_ALIASES = [
+    "tombi",
+    "@tombi-toml/tombi",
+];
+exports.PYTHON_LOCKFILE_KINDS = ["uv.lock", "poetry.lock"];
+exports.TYPESCRIPT_LOCKFILE_KINDS = [
+    "pnpm-lock.yaml",
+    "package-lock.json",
+    "yarn.lock",
+    "bun.lock",
+];
+exports.SUPPORTED_LOCKFILES = [
+    ...exports.PYTHON_LOCKFILE_KINDS,
+    ...exports.TYPESCRIPT_LOCKFILE_KINDS,
+];
+const LOCKFILE_PACKAGE_ALIASES = {
+    "uv.lock": exports.PYTHON_PACKAGE_ALIASES,
+    "poetry.lock": exports.PYTHON_PACKAGE_ALIASES,
+    "pnpm-lock.yaml": exports.TYPESCRIPT_PACKAGE_ALIASES,
+    "package-lock.json": exports.TYPESCRIPT_PACKAGE_ALIASES,
+    "yarn.lock": exports.TYPESCRIPT_PACKAGE_ALIASES,
+    "bun.lock": exports.TYPESCRIPT_PACKAGE_ALIASES,
+};
+function escapeRegex(value) {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+function asRecord(value) {
+    if (typeof value !== "object" || value === null || Array.isArray(value)) {
+        return undefined;
+    }
+    return value;
+}
+function getIndent(line) {
+    return line.match(/^\s*/)?.[0].length ?? 0;
+}
+function isTargetPackage(name, packageAliases) {
+    return packageAliases.some((alias) => alias === name);
+}
+function cleanResolvedVersion(version) {
+    const withoutQuotes = version.trim().replace(/^["']|["']$/g, "");
+    const withoutDelimiter = withoutQuotes.replace(/[,:]$/, "");
+    const withoutPeerSuffix = withoutDelimiter.split("(")[0].trim();
+    if (withoutPeerSuffix.startsWith("npm:")) {
+        return withoutPeerSuffix.slice(4);
+    }
+    return withoutPeerSuffix;
+}
+function detectLockfileKind(lockfilePath) {
+    const lockfileName = path.basename(lockfilePath);
+    if (exports.SUPPORTED_LOCKFILES.includes(lockfileName)) {
+        return lockfileName;
+    }
+    throw new Error(`Unsupported lock file: ${lockfilePath}. Supported: ${exports.SUPPORTED_LOCKFILES.join(", ")}`);
+}
+function packageNotFoundError(lockfileInput, lockfileKind) {
+    const packageAliases = LOCKFILE_PACKAGE_ALIASES[lockfileKind];
+    return new Error(`Package ${packageAliases
+        .map((name) => `\`${name}\``)
+        .join(" or ")} was not found in lock file: ${lockfileInput}`);
+}
+function extractVersionByKind(lockfileKind, content) {
+    switch (lockfileKind) {
+        case "uv.lock":
+            return (0, uv_lock_1.extractVersionFromUvLock)(content);
+        case "poetry.lock":
+            return (0, poetry_lock_1.extractVersionFromPoetryLock)(content);
+        case "pnpm-lock.yaml":
+            return (0, pnpm_lock_1.extractVersionFromPnpmLock)(content);
+        case "package-lock.json":
+            return (0, package_lock_1.extractVersionFromPackageLock)(content);
+        case "yarn.lock":
+            return (0, yarn_lock_1.extractVersionFromYarnLock)(content);
+        case "bun.lock":
+            return (0, bun_lock_1.extractVersionFromBunLock)(content);
+    }
+}
+async function resolveVersionFromLockfile(lockfileInput) {
+    const lockfilePath = path.resolve(lockfileInput);
+    const lockfileKind = detectLockfileKind(lockfilePath);
+    const lockfileBuffer = await fs.promises.readFile(lockfilePath);
+    const lockfileContent = lockfileBuffer.toString("utf8");
+    const resolvedVersion = extractVersionByKind(lockfileKind, lockfileContent);
+    if (!resolvedVersion) {
+        throw packageNotFoundError(lockfileInput, lockfileKind);
+    }
+    return resolvedVersion;
+}
+
+
+/***/ }),
+
+/***/ 4195:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.extractVersionFromPackageLock = extractVersionFromPackageLock;
+const index_1 = __nccwpck_require__(2823);
+function findVersionInDependencyMap(dependencies) {
+    for (const packageName of index_1.TYPESCRIPT_PACKAGE_ALIASES) {
+        const dependencyValue = (0, index_1.asRecord)(dependencies[packageName]);
+        if (!dependencyValue) {
+            continue;
+        }
+        if (typeof dependencyValue.version === "string") {
+            return (0, index_1.cleanResolvedVersion)(dependencyValue.version);
+        }
+    }
+    for (const dependencyValue of Object.values(dependencies)) {
+        const dependency = (0, index_1.asRecord)(dependencyValue);
+        if (!dependency) {
+            continue;
+        }
+        const nestedDependencies = (0, index_1.asRecord)(dependency.dependencies);
+        if (!nestedDependencies) {
+            continue;
+        }
+        const nestedVersion = findVersionInDependencyMap(nestedDependencies);
+        if (nestedVersion) {
+            return nestedVersion;
+        }
+    }
+    return undefined;
+}
+function extractVersionFromPackageLock(content) {
+    const parsed = JSON.parse(content);
+    const lockfile = (0, index_1.asRecord)(parsed);
+    if (!lockfile) {
+        return undefined;
+    }
+    const packages = (0, index_1.asRecord)(lockfile.packages);
+    if (packages) {
+        for (const packageName of index_1.TYPESCRIPT_PACKAGE_ALIASES) {
+            for (const packagePath of [
+                `node_modules/${packageName}`,
+                packageName,
+            ]) {
+                const packageInfo = (0, index_1.asRecord)(packages[packagePath]);
+                if (packageInfo && typeof packageInfo.version === "string") {
+                    return (0, index_1.cleanResolvedVersion)(packageInfo.version);
+                }
+            }
+        }
+    }
+    const dependencies = (0, index_1.asRecord)(lockfile.dependencies);
+    if (dependencies) {
+        return findVersionInDependencyMap(dependencies);
+    }
+    return undefined;
+}
+
+
+/***/ }),
+
+/***/ 2832:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.extractVersionFromPnpmLock = extractVersionFromPnpmLock;
+const index_1 = __nccwpck_require__(2823);
+function getPnpmPackageKeyPattern(packageName) {
+    return new RegExp(String.raw `^\s*['"]?\/?${(0, index_1.escapeRegex)(packageName)}@([^:'"\s)]+)[^:]*:\s*$`, "m");
+}
+function getPnpmDependencyLinePattern(packageName) {
+    return new RegExp(String.raw `^\s*['"]?${(0, index_1.escapeRegex)(packageName)}['"]?\s*:\s*$`);
+}
+function matchPnpmPackageKeyVersion(content, packageName) {
+    const packageKeyMatch = content.match(getPnpmPackageKeyPattern(packageName));
+    if (packageKeyMatch?.[1]) {
+        return (0, index_1.cleanResolvedVersion)(packageKeyMatch[1]);
+    }
+    return undefined;
+}
+function matchPnpmDependencyVersionLine(line) {
+    const versionMatch = line.match(/^\s*version\s*:\s*["']?([^"'\s#]+)["']?/);
+    if (versionMatch?.[1]) {
+        return (0, index_1.cleanResolvedVersion)(versionMatch[1]);
+    }
+    return undefined;
+}
+function extractVersionFromPnpmLock(content) {
+    for (const packageName of index_1.TYPESCRIPT_PACKAGE_ALIASES) {
+        const version = matchPnpmPackageKeyVersion(content, packageName);
+        if (version) {
+            return version;
+        }
+    }
+    const lines = content.split(/\r?\n/);
+    for (const packageName of index_1.TYPESCRIPT_PACKAGE_ALIASES) {
+        const dependencyLinePattern = getPnpmDependencyLinePattern(packageName);
+        for (let i = 0; i < lines.length; i += 1) {
+            if (!dependencyLinePattern.test(lines[i])) {
+                continue;
+            }
+            const baseIndent = (0, index_1.getIndent)(lines[i]);
+            for (let j = i + 1; j < lines.length; j += 1) {
+                const nextLine = lines[j];
+                if (nextLine.trim() === "") {
+                    continue;
+                }
+                const nextIndent = (0, index_1.getIndent)(nextLine);
+                if (nextIndent <= baseIndent) {
+                    break;
+                }
+                const version = matchPnpmDependencyVersionLine(nextLine);
+                if (version) {
+                    return version;
+                }
+            }
+        }
+    }
+    return undefined;
+}
+
+
+/***/ }),
+
+/***/ 292:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.extractVersionFromPoetryLock = extractVersionFromPoetryLock;
+const index_1 = __nccwpck_require__(2823);
+function splitPoetryPackageBlocks(content) {
+    return content.split(/^\s*\[\[package\]\]\s*$/m).slice(1);
+}
+function matchPoetryPackageName(packageBlock) {
+    const nameMatch = packageBlock.match(/^\s*name\s*=\s*["']([^"']+)["']/m);
+    return nameMatch?.[1];
+}
+function matchPoetryPackageVersion(packageBlock) {
+    const versionMatch = packageBlock.match(/^\s*version\s*=\s*["']([^"']+)["']/m);
+    if (versionMatch?.[1]) {
+        return (0, index_1.cleanResolvedVersion)(versionMatch[1]);
+    }
+    return undefined;
+}
+function extractVersionFromPoetryLock(content) {
+    for (const packageBlock of splitPoetryPackageBlocks(content)) {
+        const packageName = matchPoetryPackageName(packageBlock);
+        if (!packageName || !(0, index_1.isTargetPackage)(packageName, index_1.PYTHON_PACKAGE_ALIASES)) {
+            continue;
+        }
+        const version = matchPoetryPackageVersion(packageBlock);
+        if (version) {
+            return version;
+        }
+    }
+    return undefined;
+}
+
+
+/***/ }),
+
+/***/ 2802:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.extractVersionFromUvLock = extractVersionFromUvLock;
+const index_1 = __nccwpck_require__(2823);
+function splitUvPackageBlocks(content) {
+    return content.split(/^\s*\[\[package\]\]\s*$/m).slice(1);
+}
+function matchUvPackageName(packageBlock) {
+    const nameMatch = packageBlock.match(/^\s*name\s*=\s*["']([^"']+)["']/m);
+    return nameMatch?.[1];
+}
+function matchUvPackageVersion(packageBlock) {
+    const versionMatch = packageBlock.match(/^\s*version\s*=\s*["']([^"']+)["']/m);
+    if (versionMatch?.[1]) {
+        return (0, index_1.cleanResolvedVersion)(versionMatch[1]);
+    }
+    return undefined;
+}
+function extractVersionFromUvLock(content) {
+    for (const packageBlock of splitUvPackageBlocks(content)) {
+        const packageName = matchUvPackageName(packageBlock);
+        if (!packageName || !(0, index_1.isTargetPackage)(packageName, index_1.PYTHON_PACKAGE_ALIASES)) {
+            continue;
+        }
+        const version = matchUvPackageVersion(packageBlock);
+        if (version) {
+            return version;
+        }
+    }
+    return undefined;
+}
+
+
+/***/ }),
+
+/***/ 2081:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.extractVersionFromYarnLock = extractVersionFromYarnLock;
+const index_1 = __nccwpck_require__(2823);
+function getYarnAliasSelectorPattern(packageName) {
+    return new RegExp(String.raw `(^|[\s,"'])${(0, index_1.escapeRegex)(packageName)}@`);
+}
+function hasYarnPackageSelector(header) {
+    const headerWithoutColon = header.replace(/:\s*$/, "");
+    return index_1.TYPESCRIPT_PACKAGE_ALIASES.some((packageName) => {
+        return getYarnAliasSelectorPattern(packageName).test(headerWithoutColon);
+    });
+}
+function matchYarnV1VersionLine(line) {
+    const yarnV1Match = line.match(/^\s*version\s+"([^"]+)"/);
+    if (yarnV1Match?.[1]) {
+        return (0, index_1.cleanResolvedVersion)(yarnV1Match[1]);
+    }
+    return undefined;
+}
+function matchYarnV2VersionLine(line) {
+    const yarnV2Match = line.match(/^\s*version\s*:\s*["']?([^"'\s]+)["']?/);
+    if (yarnV2Match?.[1]) {
+        return (0, index_1.cleanResolvedVersion)(yarnV2Match[1]);
+    }
+    return undefined;
+}
+function extractVersionFromYarnLock(content) {
+    const lines = content.split(/\r?\n/);
+    for (let i = 0; i < lines.length; i += 1) {
+        const headerLine = lines[i];
+        if (/^\s/.test(headerLine) || !headerLine.trimEnd().endsWith(":")) {
+            continue;
+        }
+        if (!hasYarnPackageSelector(headerLine.trim())) {
+            continue;
+        }
+        for (let j = i + 1; j < lines.length; j += 1) {
+            const detailLine = lines[j];
+            if (!/^\s/.test(detailLine) && detailLine.trimEnd().endsWith(":")) {
+                break;
+            }
+            const yarnV1Version = matchYarnV1VersionLine(detailLine);
+            if (yarnV1Version) {
+                return yarnV1Version;
+            }
+            const yarnV2Version = matchYarnV2VersionLine(detailLine);
+            if (yarnV2Version) {
+                return yarnV2Version;
+            }
+        }
+    }
+    return undefined;
+}
 
 
 /***/ }),

@@ -15,24 +15,53 @@ vi.mock("node:fs", async () => {
     ...actual,
     existsSync: vi.fn(),
     promises: {
+      ...actual.promises,
       readFile: vi.fn(),
     },
   };
 });
-vi.mock("os");
+
+vi.mock("node:os");
 
 // Create mock for execSync
 const execSyncMock = vi.fn();
 
 // Mock child_process module
-vi.mock("child_process", () => ({
+vi.mock("node:child_process", () => ({
   execSync: execSyncMock,
 }));
 
 describe("setup-tombi action", () => {
   const mockScriptPath = "/tmp/install.sh";
+  const installScriptUrl = "https://tombi-toml.github.io/tombi/install.sh";
+
+  function setInputs(
+    overrides: Partial<
+      Record<"version" | "lockfile" | "checksum", string>
+    > = {},
+  ): void {
+    const inputValues = {
+      version: "latest",
+      lockfile: "",
+      checksum: "",
+      ...overrides,
+    };
+
+    vi.mocked(core.getInput).mockImplementation((name: string) => {
+      if (name in inputValues) {
+        return inputValues[name as keyof typeof inputValues];
+      }
+      return "";
+    });
+  }
+
+  async function runAction(): Promise<void> {
+    const { run } = await import("./index");
+    await run();
+  }
 
   beforeEach(() => {
+    vi.resetModules();
     vi.resetAllMocks();
 
     vi.mocked(os.platform).mockReturnValue("linux");
@@ -40,19 +69,13 @@ describe("setup-tombi action", () => {
 
     vi.mocked(tc.downloadTool).mockResolvedValue(mockScriptPath);
     vi.mocked(fs.existsSync).mockReturnValue(true);
+    vi.mocked(fs.promises.readFile).mockResolvedValue(
+      Buffer.from("mock-content"),
+    );
 
     execSyncMock.mockReturnValue("tombi 0.7.11\n");
 
-    vi.mocked(core.getInput).mockImplementation((name: string) => {
-      switch (name) {
-        case "version":
-          return "latest";
-        case "checksum":
-          return "";
-        default:
-          return "";
-      }
-    });
+    setInputs();
   });
 
   afterEach(() => {
@@ -61,12 +84,9 @@ describe("setup-tombi action", () => {
 
   describe("Linux", () => {
     it("uses install.sh script with install-dir", async () => {
-      const { run } = await import("./index");
-      await run();
+      await runAction();
 
-      expect(tc.downloadTool).toHaveBeenCalledWith(
-        "https://tombi-toml.github.io/tombi/install.sh",
-      );
+      expect(tc.downloadTool).toHaveBeenCalledWith(installScriptUrl);
       expect(execSyncMock).toHaveBeenCalledWith(
         `bash "${mockScriptPath}" --version latest --install-dir "/home/user/.local/bin"`,
         { stdio: "inherit" },
@@ -75,17 +95,8 @@ describe("setup-tombi action", () => {
     });
 
     it("installs without version arg when not specified", async () => {
-      vi.mocked(core.getInput).mockImplementation((name: string) => {
-        switch (name) {
-          case "version":
-            return "";
-          default:
-            return "";
-        }
-      });
-
-      const { run } = await import("./index");
-      await run();
+      setInputs({ version: "" });
+      await runAction();
 
       expect(execSyncMock).toHaveBeenCalledWith(
         `bash "${mockScriptPath}" --install-dir "/home/user/.local/bin"`,
@@ -101,8 +112,7 @@ describe("setup-tombi action", () => {
     });
 
     it("uses bash to execute install.sh", async () => {
-      const { run } = await import("./index");
-      await run();
+      await runAction();
 
       expect(execSyncMock).toHaveBeenCalledWith(
         expect.stringContaining(`bash "${mockScriptPath}"`),
@@ -111,8 +121,7 @@ describe("setup-tombi action", () => {
     });
 
     it("uses ~/.local/bin for install directory", async () => {
-      const { run } = await import("./index");
-      await run();
+      await runAction();
 
       expect(core.addPath).toHaveBeenCalledWith(
         path.join("C:\\Users\\user", ".local", "bin"),
@@ -127,12 +136,9 @@ describe("setup-tombi action", () => {
     });
 
     it("uses install.sh script", async () => {
-      const { run } = await import("./index");
-      await run();
+      await runAction();
 
-      expect(tc.downloadTool).toHaveBeenCalledWith(
-        "https://tombi-toml.github.io/tombi/install.sh",
-      );
+      expect(tc.downloadTool).toHaveBeenCalledWith(installScriptUrl);
       expect(execSyncMock).toHaveBeenCalledWith(
         `bash "${mockScriptPath}" --version latest --install-dir "/Users/user/.local/bin"`,
         { stdio: "inherit" },
@@ -147,46 +153,26 @@ describe("setup-tombi action", () => {
       hash.update(mockFileContent);
       const expectedChecksum = hash.digest("hex");
 
-      vi.mocked(core.getInput).mockImplementation((name: string) => {
-        switch (name) {
-          case "checksum":
-            return expectedChecksum;
-          case "version":
-            return "0.7.0";
-          default:
-            return "";
-        }
-      });
+      setInputs({ checksum: expectedChecksum, version: "0.7.0" });
 
       vi.mocked(fs.promises.readFile).mockResolvedValue(
         Buffer.from(mockFileContent),
       );
 
-      const { run } = await import("./index");
-      await run();
+      await runAction();
 
       expect(fs.promises.readFile).toHaveBeenCalled();
       expect(core.info).toHaveBeenCalledWith("Checksum verification passed");
     });
 
     it("fails when checksum does not match", async () => {
-      vi.mocked(core.getInput).mockImplementation((name: string) => {
-        switch (name) {
-          case "checksum":
-            return "incorrect-checksum";
-          case "version":
-            return "0.7.0";
-          default:
-            return "";
-        }
-      });
+      setInputs({ checksum: "incorrect-checksum", version: "0.7.0" });
 
       vi.mocked(fs.promises.readFile).mockResolvedValue(
         Buffer.from("mock-content"),
       );
 
-      const { run } = await import("./index");
-      await run();
+      await runAction();
 
       expect(core.setFailed).toHaveBeenCalledWith(
         expect.stringContaining("Checksum verification failed"),
@@ -199,8 +185,7 @@ describe("setup-tombi action", () => {
       const mockError = new Error("Download failed");
       vi.mocked(tc.downloadTool).mockRejectedValue(mockError);
 
-      const { run } = await import("./index");
-      await run();
+      await runAction();
 
       expect(core.setFailed).toHaveBeenCalledWith(mockError.message);
     });
@@ -208,8 +193,7 @@ describe("setup-tombi action", () => {
     it("fails if binary not found after install", async () => {
       vi.mocked(fs.existsSync).mockReturnValue(false);
 
-      const { run } = await import("./index");
-      await run();
+      await runAction();
 
       expect(core.setFailed).toHaveBeenCalledWith(
         expect.stringContaining("Binary not found"),
