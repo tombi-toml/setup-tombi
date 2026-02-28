@@ -2,7 +2,7 @@ import {
   TYPESCRIPT_PACKAGE_ALIASES,
   asRecord,
   cleanResolvedVersion,
-} from "./index";
+} from "./common";
 
 function findVersionInDependencyMap(
   dependencies: Record<string, unknown>,

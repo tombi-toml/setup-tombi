@@ -12,13 +12,13 @@
     "lint": "biome lint --fix",
     "lint-check": "biome lint",
     "test": "vitest run",
-    "test:lockfile-generated": "LOCKFILE_GENERATION_TEST=1 vitest run tests/lockfile/generated/*.test.ts",
-    "test:lockfile-generated:uv": "LOCKFILE_GENERATION_TEST=1 vitest run tests/lockfile/generated/uv-generated.test.ts",
-    "test:lockfile-generated:poetry": "LOCKFILE_GENERATION_TEST=1 vitest run tests/lockfile/generated/poetry-generated.test.ts",
-    "test:lockfile-generated:pnpm": "LOCKFILE_GENERATION_TEST=1 vitest run tests/lockfile/generated/pnpm-generated.test.ts",
-    "test:lockfile-generated:npm": "LOCKFILE_GENERATION_TEST=1 vitest run tests/lockfile/generated/npm-generated.test.ts",
-    "test:lockfile-generated:yarn": "LOCKFILE_GENERATION_TEST=1 vitest run tests/lockfile/generated/yarn-generated.test.ts",
-    "test:lockfile-generated:bun": "LOCKFILE_GENERATION_TEST=1 vitest run tests/lockfile/generated/bun-generated.test.ts",
+    "test:lockfile-generated": "cross-env LOCKFILE_GENERATION_TEST=1 vitest run tests/lockfile/generated/*.test.ts",
+    "test:lockfile-generated:uv": "cross-env LOCKFILE_GENERATION_TEST=1 vitest run tests/lockfile/generated/uv-generated.test.ts",
+    "test:lockfile-generated:poetry": "cross-env LOCKFILE_GENERATION_TEST=1 vitest run tests/lockfile/generated/poetry-generated.test.ts",
+    "test:lockfile-generated:pnpm": "cross-env LOCKFILE_GENERATION_TEST=1 vitest run tests/lockfile/generated/pnpm-generated.test.ts",
+    "test:lockfile-generated:npm": "cross-env LOCKFILE_GENERATION_TEST=1 vitest run tests/lockfile/generated/npm-generated.test.ts",
+    "test:lockfile-generated:yarn": "cross-env LOCKFILE_GENERATION_TEST=1 vitest run tests/lockfile/generated/yarn-generated.test.ts",
+    "test:lockfile-generated:bun": "cross-env LOCKFILE_GENERATION_TEST=1 vitest run tests/lockfile/generated/bun-generated.test.ts",
     "codex": "npx @openai/codex@latest",
     "claude": "npx @anthropic-ai/claude-code@latest"
   },
@@ -34,6 +34,7 @@
     "@biomejs/biome": "1.9.4",
     "@types/node": "^20.11.24",
     "@vercel/ncc": "^0.38.1",
+    "cross-env": "^7.0.3",
     "typescript": "^5.3.3",
     "vitest": "^3.1.3"
   }

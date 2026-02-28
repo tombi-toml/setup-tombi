@@ -52,7 +52,7 @@ jobs:
         if: matrix.manager == 'poetry'
         uses: snok/install-poetry@v1
         with:
-          version: latest
+          version: 1.8.4
 
       - name: Setup Yarn
         if: matrix.manager == 'yarn'
@@ -68,4 +68,3 @@ jobs:
         env:
           LOCKFILE_GENERATION_TEST: "1"
         run: pnpm run test:lockfile-generated:${{ matrix.manager }}
-

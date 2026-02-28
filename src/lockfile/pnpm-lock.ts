@@ -3,7 +3,7 @@ import {
   cleanResolvedVersion,
   escapeRegex,
   getIndent,
-} from "./index";
+} from "./common";
 
 function getPnpmPackageKeyPattern(packageName: string): RegExp {
   return new RegExp(

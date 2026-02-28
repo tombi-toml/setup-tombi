@@ -2,7 +2,7 @@ import {
   PYTHON_PACKAGE_ALIASES,
   cleanResolvedVersion,
   isTargetPackage,
-} from "./index";
+} from "./common";
 
 function splitPoetryPackageBlocks(content: string): string[] {
   return content.split(/^\s*\[\[package\]\]\s*$/m).slice(1);
