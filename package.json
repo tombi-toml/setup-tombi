@@ -11,7 +11,9 @@
     "format-check": "biome format",
     "lint": "biome lint --fix",
     "lint-check": "biome lint",
-    "test": "vitest run"
+    "test": "vitest run",
+    "codex": "npx @openai/codex@latest",
+    "claude": "npx @anthropic-ai/claude-code@latest"
   },
   "keywords": ["github", "actions", "tombi", "toml", "setup"],
   "author": "tombi-toml",
