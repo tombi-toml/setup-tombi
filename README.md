@@ -19,7 +19,7 @@ This action sets up [Tombi](https://github.com/tombi-toml/tombi) in your GitHub 
   env:
     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   with:
-    version: '0.8.0'
+    version: '0.9.0'
 ```
 
 ### Install a version from a lock file
@@ -39,7 +39,7 @@ This action sets up [Tombi](https://github.com/tombi-toml/tombi) in your GitHub 
   env:
     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   with:
-    version: '0.8.0'
+    version: '0.9.0'
     checksum: 'sha256-checksum-here'
 ```
 
@@ -48,7 +48,7 @@ This action sets up [Tombi](https://github.com/tombi-toml/tombi) in your GitHub 
 
 | Name | Description | Required | Default |
 |------|-------------|----------|---------|
-| `version` | Version of Tombi to install (e.g., "0.8.0", "latest"). Mutually exclusive with `lockfile` | No | - |
+| `version` | Version of Tombi to install (e.g., "0.9.0", "latest"). Mutually exclusive with `lockfile` | No | - |
 | `lockfile` | Path to a lock file used to resolve Tombi version. Supported: `uv.lock`, `poetry.lock`, `pnpm-lock.yaml`, `package-lock.json`, `yarn.lock`, `bun.lock` | No | - |
 | `checksum` | SHA256 checksum to validate the downloaded executable | No | - |
 
@@ -74,7 +74,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          version: '0.8.0'
+          version: '0.9.0'
       - name: Validate TOML files
         run: tombi lint
 ```
