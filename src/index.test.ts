@@ -1,12 +1,13 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import * as cache from "@actions/cache";
 import * as core from "@actions/core";
 import * as tc from "@actions/tool-cache";
 import * as fs from "node:fs";
-import * as path from "node:path";
 import * as os from "node:os";
+import * as path from "node:path";
 import { createHash } from "node:crypto";
 
-// Mock the modules
+vi.mock("@actions/cache");
 vi.mock("@actions/core");
 vi.mock("@actions/tool-cache");
 vi.mock("node:fs", async () => {
@@ -14,22 +15,20 @@ vi.mock("node:fs", async () => {
   return {
     ...actual,
     existsSync: vi.fn(),
+    mkdirSync: vi.fn(),
     promises: {
       ...actual.promises,
       readFile: vi.fn(),
     },
   };
 });
-
 vi.mock("node:os");
 vi.mock("./lockfile", () => ({
   resolveVersionFromLockfile: vi.fn(),
 }));
 
-// Create mock for execSync
 const execSyncMock = vi.fn();
 
-// Mock child_process module
 vi.mock("node:child_process", () => ({
   execSync: execSyncMock,
 }));
@@ -40,13 +39,14 @@ describe("setup-tombi action", () => {
 
   function setInputs(
     overrides: Partial<
-      Record<"version" | "lockfile" | "checksum", string>
+      Record<"version" | "lockfile" | "checksum" | "enable-cache", string>
     > = {},
   ): void {
     const inputValues = {
       version: "latest",
       lockfile: "",
       checksum: "",
+      "enable-cache": "auto",
       ...overrides,
     };
 
@@ -66,11 +66,17 @@ describe("setup-tombi action", () => {
   beforeEach(async () => {
     vi.resetModules();
     vi.resetAllMocks();
+    vi.unstubAllEnvs();
+    vi.stubEnv("RUNNER_ENVIRONMENT", "github-hosted");
+    vi.stubEnv("XDG_CACHE_HOME", "");
+    vi.stubEnv("LOCALAPPDATA", "");
 
     vi.mocked(os.platform).mockReturnValue("linux");
+    vi.mocked(os.arch).mockReturnValue("x64");
     vi.mocked(os.homedir).mockReturnValue("/home/user");
 
     vi.mocked(tc.downloadTool).mockResolvedValue(mockScriptPath);
+    vi.mocked(cache.restoreCache).mockResolvedValue(undefined);
     vi.mocked(fs.existsSync).mockReturnValue(true);
     vi.mocked(fs.promises.readFile).mockResolvedValue(
       Buffer.from("mock-content"),
@@ -88,6 +94,7 @@ describe("setup-tombi action", () => {
 
   afterEach(() => {
     vi.resetAllMocks();
+    vi.unstubAllEnvs();
   });
 
   describe("Linux", () => {
@@ -95,11 +102,20 @@ describe("setup-tombi action", () => {
       await runAction();
 
       expect(tc.downloadTool).toHaveBeenCalledWith(installScriptUrl);
+      expect(cache.restoreCache).toHaveBeenCalledWith(
+        ["/home/user/.cache/tombi"],
+        "setup-tombi-v1-linux-x64-latest--home-user-.cache-tombi",
+        ["setup-tombi-v1-linux-x64-"],
+      );
       expect(execSyncMock).toHaveBeenCalledWith(
         `bash "${mockScriptPath}" --version latest --install-dir "/home/user/.local/bin"`,
         { stdio: "inherit" },
       );
       expect(core.addPath).toHaveBeenCalledWith("/home/user/.local/bin");
+      expect(core.exportVariable).toHaveBeenCalledWith(
+        "TOMBI_CACHE_HOME",
+        "/home/user/.cache/tombi",
+      );
     });
 
     it("installs without version arg when not specified", async () => {
@@ -129,12 +145,45 @@ describe("setup-tombi action", () => {
         { stdio: "inherit" },
       );
     });
+
+    it("uses TOMBI_CACHE_HOME when provided", async () => {
+      vi.stubEnv("TOMBI_CACHE_HOME", "/tmp/tombi-cache");
+
+      await runAction();
+
+      expect(cache.restoreCache).toHaveBeenCalledWith(
+        ["/tmp/tombi-cache"],
+        "setup-tombi-v1-linux-x64-latest--tmp-tombi-cache",
+        ["setup-tombi-v1-linux-x64-"],
+      );
+      expect(core.exportVariable).toHaveBeenCalledWith(
+        "TOMBI_CACHE_HOME",
+        "/tmp/tombi-cache",
+      );
+    });
+
+    it("skips cache restore when disabled", async () => {
+      setInputs({ "enable-cache": "false" });
+
+      await runAction();
+
+      expect(cache.restoreCache).not.toHaveBeenCalled();
+    });
+
+    it("disables auto cache on self-hosted runners", async () => {
+      vi.stubEnv("RUNNER_ENVIRONMENT", "self-hosted");
+
+      await runAction();
+
+      expect(cache.restoreCache).not.toHaveBeenCalled();
+    });
   });
 
   describe("Windows", () => {
     beforeEach(() => {
       vi.mocked(os.platform).mockReturnValue("win32");
       vi.mocked(os.homedir).mockReturnValue("C:\\Users\\user");
+      vi.stubEnv("LOCALAPPDATA", "C:\\Users\\user\\AppData\\Local");
     });
 
     it("uses bash to execute install.sh", async () => {
@@ -153,12 +202,23 @@ describe("setup-tombi action", () => {
         path.join("C:\\Users\\user", ".local", "bin"),
       );
     });
+
+    it("uses LOCALAPPDATA for the default cache directory", async () => {
+      await runAction();
+
+      expect(cache.restoreCache).toHaveBeenCalledWith(
+        [path.join("C:\\Users\\user\\AppData\\Local", "tombi", "cache")],
+        "setup-tombi-v1-win32-x64-latest-C-Users-user-AppData-Local-tombi-cache",
+        ["setup-tombi-v1-win32-x64-"],
+      );
+    });
   });
 
   describe("macOS", () => {
     beforeEach(() => {
       vi.mocked(os.platform).mockReturnValue("darwin");
       vi.mocked(os.homedir).mockReturnValue("/Users/user");
+      vi.stubEnv("XDG_CACHE_HOME", "");
     });
 
     it("uses install.sh script", async () => {
@@ -168,6 +228,16 @@ describe("setup-tombi action", () => {
       expect(execSyncMock).toHaveBeenCalledWith(
         `bash "${mockScriptPath}" --version latest --install-dir "/Users/user/.local/bin"`,
         { stdio: "inherit" },
+      );
+    });
+
+    it("uses Library/Caches for the default cache directory", async () => {
+      await runAction();
+
+      expect(cache.restoreCache).toHaveBeenCalledWith(
+        ["/Users/user/Library/Caches/tombi"],
+        "setup-tombi-v1-darwin-x64-latest--Users-user-Library-Caches-tombi",
+        ["setup-tombi-v1-darwin-x64-"],
       );
     });
   });
@@ -235,6 +305,16 @@ describe("setup-tombi action", () => {
       expect(lockfileModule.resolveVersionFromLockfile).not.toHaveBeenCalled();
       expect(core.setFailed).toHaveBeenCalledWith(
         "Inputs `version` and `lockfile` are mutually exclusive.",
+      );
+    });
+
+    it("fails when enable-cache has an invalid value", async () => {
+      setInputs({ "enable-cache": "sometimes" });
+
+      await runAction();
+
+      expect(core.setFailed).toHaveBeenCalledWith(
+        'Input `enable-cache` must be one of "true", "false", or "auto".',
       );
     });
   });

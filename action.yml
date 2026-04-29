@@ -11,10 +11,19 @@ inputs:
   checksum:
     description: "SHA256 checksum to validate the downloaded executable"
     required: false
+  enable-cache:
+    description: 'Enable persistence of the Tombi cache. Supports "true", "false", and "auto".'
+    required: false
+    default: "auto"
+outputs:
+  cache-hit:
+    description: "A boolean value to indicate whether a Tombi cache entry was restored"
 
 runs:
   using: "node24"
   main: "dist/index.js"
+  post: "dist/post/index.js"
+  post-if: success()
 
 branding:
   icon: "feather"

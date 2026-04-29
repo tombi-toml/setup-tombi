@@ -35,6 +35,31 @@ This action sets up [Tombi](https://github.com/tombi-toml/tombi) in your GitHub 
     checksum: 'sha256-checksum-here'
 ```
 
+### Cache behavior
+
+By default, `enable-cache` is `auto`.
+
+- On GitHub-hosted runners, cache is enabled automatically.
+- On self-hosted runners, cache is disabled automatically.
+
+Use `enable-cache: true` only when you want to force cache on, for example on self-hosted runners.
+
+```yaml
+- uses: tombi-toml/setup-tombi@v1
+  with:
+    enable-cache: true
+```
+
+### Use a custom cache directory
+
+```yaml
+- uses: tombi-toml/setup-tombi@v1
+  with:
+    enable-cache: true
+  env:
+    TOMBI_CACHE_HOME: ${{ runner.temp }}/tombi-cache
+```
+
 
 ## Inputs
 
@@ -43,6 +68,7 @@ This action sets up [Tombi](https://github.com/tombi-toml/tombi) in your GitHub 
 | `version` | Version of Tombi to install (e.g., "0.9.26", "latest"). Mutually exclusive with `lockfile` | No | - |
 | `lockfile` | Path to a lock file used to resolve Tombi version. Supported: `uv.lock`, `poetry.lock`, `pnpm-lock.yaml`, `package-lock.json`, `yarn.lock`, `bun.lock` | No | - |
 | `checksum` | SHA256 checksum to validate the downloaded executable | No | - |
+| `enable-cache` | Persist the Tombi cache using GitHub Actions cache. Supports `true`, `false`, and `auto` | No | `auto` |
 
 ## Example workflow
 
