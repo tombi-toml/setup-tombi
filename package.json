@@ -22,13 +22,7 @@
     "codex": "npx @openai/codex@latest",
     "claude": "npx @anthropic-ai/claude-code@latest"
   },
-  "keywords": [
-    "github",
-    "actions",
-    "tombi",
-    "toml",
-    "setup"
-  ],
+  "keywords": ["github", "actions", "tombi", "toml", "setup"],
   "author": "tombi-toml",
   "license": "MIT",
   "packageManager": "pnpm@10.10.0",
