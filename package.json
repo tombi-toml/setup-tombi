@@ -6,7 +6,7 @@
   "main": "dist/index.js",
   "scripts": {
     "preinstall": "npx only-allow pnpm",
-    "build": "ncc build src/index.ts -o dist",
+    "build": "rm -rf dist && ncc build src/index.ts -o dist && ncc build src/post.ts -o dist/post",
     "format": "biome format --fix",
     "format-check": "biome format",
     "lint": "biome lint --fix",
@@ -27,6 +27,7 @@
   "license": "MIT",
   "packageManager": "pnpm@10.10.0",
   "dependencies": {
+    "@actions/cache": "^4.0.2",
     "@actions/core": "^1.10.1",
     "@actions/tool-cache": "^2.0.1"
   },

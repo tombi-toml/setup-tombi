@@ -5,6 +5,7 @@ import * as os from "node:os";
 import * as fs from "node:fs";
 import { createHash } from "node:crypto";
 import { execSync } from "node:child_process";
+import { parseCacheMode, restoreTombiCache, shouldEnableCache } from "./cache";
 import { resolveVersionFromLockfile } from "./lockfile";
 
 function isWindows(): boolean {
@@ -47,7 +48,16 @@ export async function run(): Promise<void> {
     const versionInput = core.getInput("version").trim();
     const lockfileInput = core.getInput("lockfile").trim();
     const checksum = core.getInput("checksum") || undefined;
+    const enableCacheInput = core.getInput("enable-cache");
     const version = await resolveRequestedVersion(versionInput, lockfileInput);
+    const cacheMode = parseCacheMode(enableCacheInput);
+    const enableCache = shouldEnableCache(cacheMode);
+
+    if (enableCache) {
+      await restoreTombiCache(version || "latest");
+    } else {
+      core.info("Tombi cache is disabled.");
+    }
 
     // Add to PATH first
     const installDir = getInstallDir();
