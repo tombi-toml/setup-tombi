@@ -74,9 +74,18 @@ export async function restoreTombiCache(keyPart: string): Promise<void> {
   core.saveState(STATE_CACHE_KEY, cacheKey);
   core.saveState(STATE_CACHE_PATH, cacheDir);
 
-  const restoredKey = await cache.restoreCache([cacheDir], cacheKey, [
-    `${createBaseCacheKey()}-`,
-  ]);
+  let restoredKey: string | undefined;
+  try {
+    restoredKey = await cache.restoreCache([cacheDir], cacheKey, [
+      `${createBaseCacheKey()}-`,
+    ]);
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to restore Tombi cache.";
+    core.warning(message);
+    core.setOutput("cache-hit", "false");
+    return;
+  }
 
   if (!restoredKey) {
     core.info(`No GitHub Actions cache found for key: ${cacheKey}`);

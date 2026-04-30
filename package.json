@@ -6,7 +6,7 @@
   "main": "dist/index.js",
   "scripts": {
     "preinstall": "npx only-allow pnpm",
-    "build": "rm -rf dist && ncc build src/index.ts -o dist && ncc build src/post.ts -o dist/post",
+    "build": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\" && ncc build src/index.ts -o dist && ncc build src/post.ts -o dist/post",
     "format": "biome format --fix",
     "format-check": "biome format",
     "lint": "biome lint --fix",

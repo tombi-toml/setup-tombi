@@ -162,6 +162,22 @@ describe("setup-tombi action", () => {
       );
     });
 
+    it("warns and continues when cache restore fails", async () => {
+      vi.mocked(cache.restoreCache).mockRejectedValue(
+        new Error("cache backend unavailable"),
+      );
+
+      await runAction();
+
+      expect(core.warning).toHaveBeenCalledWith("cache backend unavailable");
+      expect(core.setOutput).toHaveBeenCalledWith("cache-hit", "false");
+      expect(execSyncMock).toHaveBeenCalledWith(
+        `bash "${mockScriptPath}" --version latest --install-dir "/home/user/.local/bin"`,
+        { stdio: "inherit" },
+      );
+      expect(core.setFailed).not.toHaveBeenCalled();
+    });
+
     it("skips cache restore when disabled", async () => {
       setInputs({ "enable-cache": "false" });
 

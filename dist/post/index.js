@@ -40130,11 +40130,10 @@ exports.STATE_CACHE_PATH = "cache-path";
 const CACHE_VERSION = "v1";
 function parseCacheMode(input) {
     const normalized = input.trim().toLowerCase();
-    if (normalized === "" ||
-        normalized === "auto" ||
+    if (normalized === "auto" ||
         normalized === "true" ||
         normalized === "false") {
-        return (normalized || "auto");
+        return normalized;
     }
     throw new Error('Input `enable-cache` must be one of "true", "false", or "auto".');
 }
@@ -40175,9 +40174,18 @@ async function restoreTombiCache(keyPart) {
     core.saveState(exports.STATE_CACHE_ENABLED, "true");
     core.saveState(exports.STATE_CACHE_KEY, cacheKey);
     core.saveState(exports.STATE_CACHE_PATH, cacheDir);
-    const restoredKey = await cache.restoreCache([cacheDir], cacheKey, [
-        `${createBaseCacheKey()}-`,
-    ]);
+    let restoredKey;
+    try {
+        restoredKey = await cache.restoreCache([cacheDir], cacheKey, [
+            `${createBaseCacheKey()}-`,
+        ]);
+    }
+    catch (error) {
+        const message = error instanceof Error ? error.message : "Failed to restore Tombi cache.";
+        core.warning(message);
+        core.setOutput("cache-hit", "false");
+        return;
+    }
     if (!restoredKey) {
         core.info(`No GitHub Actions cache found for key: ${cacheKey}`);
         core.setOutput("cache-hit", "false");
