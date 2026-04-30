@@ -15,12 +15,11 @@ export type CacheMode = "true" | "false" | "auto";
 export function parseCacheMode(input: string): CacheMode {
   const normalized = input.trim().toLowerCase();
   if (
-    normalized === "" ||
     normalized === "auto" ||
     normalized === "true" ||
     normalized === "false"
   ) {
-    return (normalized || "auto") as CacheMode;
+    return normalized as CacheMode;
   }
 
   throw new Error(

@@ -317,5 +317,15 @@ describe("setup-tombi action", () => {
         'Input `enable-cache` must be one of "true", "false", or "auto".',
       );
     });
+
+    it("fails when enable-cache is empty", async () => {
+      setInputs({ "enable-cache": "" });
+
+      await runAction();
+
+      expect(core.setFailed).toHaveBeenCalledWith(
+        'Input `enable-cache` must be one of "true", "false", or "auto".',
+      );
+    });
   });
 });
