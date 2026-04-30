@@ -16,6 +16,8 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Update Major Minor Tags
         run: |
           set -x
@@ -26,6 +28,8 @@ jobs:
           TAG="${GITHUB_REF#refs/tags/}" # v1.2.3
           MINOR="${TAG%.*}"              # v1.2
           MAJOR="${MINOR%.*}"            # v1
+          VERSION="${TAG#v}"             # 1.2.3
+          export VERSION
 
           if [ "${GITHUB_REF}" = "${TAG}" ]; then
             echo "This workflow is not triggered by tag push: GITHUB_REF=${GITHUB_REF}"
@@ -38,6 +42,23 @@ jobs:
           # Set up Git.
           git config user.name "${GITHUB_ACTOR}"
           git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
+
+          # Sync package.json version on main with the pushed release tag.
+          git fetch origin main
+          git checkout -B main origin/main
+          node -e '
+            const fs = require("node:fs");
+            const path = "package.json";
+            const pkg = JSON.parse(fs.readFileSync(path, "utf8"));
+            pkg.version = process.env.VERSION;
+            fs.writeFileSync(path, `${JSON.stringify(pkg, null, 2)}\n`);
+          '
+
+          if ! git diff --quiet -- package.json; then
+            git add package.json
+            git commit -m "Update package version to ${TAG}"
+            git push origin main
+          fi
 
           # Update MAJOR/MINOR tag
           git tag -fa "${MAJOR}" -m "${MESSAGE}"
