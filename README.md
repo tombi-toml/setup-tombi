@@ -36,14 +36,9 @@ This action sets up [Tombi](https://github.com/tombi-toml/tombi) in your GitHub 
 ```
 
 ### Cache behavior
-
-By default, `enable-cache` is `auto`.
-
-- `true` always enables cache.
-- `false` always disables cache.
-- `auto` enables cache unless the runner environment is `self-hosted`.
-  On GitHub-hosted runners, cache is enabled automatically.
-  On self-hosted runners, cache is disabled automatically.
+- `true`: always enables cache.
+- `false`: always disables cache.
+- `auto` (default): enables cache unless the runner environment is `self-hosted` runner.
 
 Use `enable-cache: true` only when you want to force cache on, for example on self-hosted runners.
 
