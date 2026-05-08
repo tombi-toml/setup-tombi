@@ -15,7 +15,7 @@ This action sets up [Tombi](https://github.com/tombi-toml/tombi) in your GitHub 
 ```yaml
 - uses: tombi-toml/setup-tombi@v1
   with:
-    version: '0.10.6'
+    version: '0.11.0'
 ```
 
 ### Install a version from a lock file
@@ -31,7 +31,7 @@ This action sets up [Tombi](https://github.com/tombi-toml/tombi) in your GitHub 
 ```yaml
 - uses: tombi-toml/setup-tombi@v1
   with:
-    version: '0.10.6'
+    version: '0.11.0'
     checksum: 'sha256-checksum-here'
 ```
 
@@ -63,7 +63,7 @@ Use `enable-cache: true` only when you want to force cache on, for example on se
 
 | Name | Description | Required | Default |
 |------|-------------|----------|---------|
-| `version` | Version of Tombi to install (e.g., "0.10.6", "latest"). Mutually exclusive with `lockfile` | No | - |
+| `version` | Version of Tombi to install (e.g., "0.11.0", "latest"). Mutually exclusive with `lockfile` | No | - |
 | `lockfile` | Path to a lock file used to resolve Tombi version. Supported: `uv.lock`, `poetry.lock`, `pnpm-lock.yaml`, `package-lock.json`, `yarn.lock`, `bun.lock` | No | - |
 | `checksum` | SHA256 checksum to validate the downloaded executable | No | - |
 | `enable-cache` | Persist the Tombi cache using GitHub Actions cache. Supports `true`, `false`, and `auto` | No | `auto` |
@@ -88,7 +88,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: tombi-toml/setup-tombi@v1
         with:
-          version: '0.10.6'
+          version: '0.11.0'
       - name: Validate TOML files
         run: tombi lint
 ```
