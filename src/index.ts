@@ -38,7 +38,7 @@ function getDefaultTombiVersion(): string {
 async function resolveRequestedVersion(
   versionInput: string,
   lockfileInput: string,
-): Promise<string | undefined> {
+): Promise<string> {
   if (versionInput && lockfileInput) {
     throw new Error("Inputs `version` and `lockfile` are mutually exclusive.");
   }
@@ -69,7 +69,7 @@ export async function run(): Promise<void> {
     const enableCache = shouldEnableCache(cacheMode);
 
     if (enableCache) {
-      await restoreTombiCache(version || "latest");
+      await restoreTombiCache(version);
     } else {
       core.info("Tombi cache is disabled.");
     }
@@ -84,14 +84,10 @@ export async function run(): Promise<void> {
     const scriptPath = await tc.downloadTool(installScriptUrl);
 
     // Build arguments
-    const args: string[] = [];
-    if (version) {
-      args.push(`--version ${version}`);
-    }
-    args.push(`--install-dir "${installDir}"`);
+    const args = [`--version ${version}`, `--install-dir "${installDir}"`];
 
     // Execute the install script using bash
-    core.info(`Installing Tombi${version ? ` version ${version}` : ""}...`);
+    core.info(`Installing Tombi version ${version}...`);
     const command = `bash "${scriptPath}" ${args.join(" ")}`.trim();
     core.info(`Execute: ${command}`);
     execSync(command, { stdio: "inherit" });

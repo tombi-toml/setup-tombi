@@ -41223,7 +41223,7 @@ async function run() {
         const cacheMode = (0, cache_1.parseCacheMode)(enableCacheInput);
         const enableCache = (0, cache_1.shouldEnableCache)(cacheMode);
         if (enableCache) {
-            await (0, cache_1.restoreTombiCache)(version || "latest");
+            await (0, cache_1.restoreTombiCache)(version);
         }
         else {
             core.info("Tombi cache is disabled.");
@@ -41236,13 +41236,9 @@ async function run() {
         core.info("Downloading Tombi install script...");
         const scriptPath = await tc.downloadTool(installScriptUrl);
         // Build arguments
-        const args = [];
-        if (version) {
-            args.push(`--version ${version}`);
-        }
-        args.push(`--install-dir "${installDir}"`);
+        const args = [`--version ${version}`, `--install-dir "${installDir}"`];
         // Execute the install script using bash
-        core.info(`Installing Tombi${version ? ` version ${version}` : ""}...`);
+        core.info(`Installing Tombi version ${version}...`);
         const command = `bash "${scriptPath}" ${args.join(" ")}`.trim();
         core.info(`Execute: ${command}`);
         (0, node_child_process_1.execSync)(command, { stdio: "inherit" });

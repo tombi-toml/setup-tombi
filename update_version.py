@@ -3,12 +3,14 @@ import subprocess
 import json
 from pathlib import Path
 
+REPO_ROOT = Path(__file__).parent
+
 
 def main():
-    package_json_path = Path(__file__).parent / "package.json"
+    package_json_path = REPO_ROOT / "package.json"
     package_version = json.loads(package_json_path.read_text())["version"]
 
-    readme_path = Path(__file__).parent / "README.md"
+    readme_path = REPO_ROOT / "README.md"
     readme_content = readme_path.read_text()
     version_match = re.search(
         r"uses: tombi-toml/setup-tombi@v(\d+\.\d+\.\d+)", readme_content
@@ -29,7 +31,7 @@ def main():
         ["git", "commit", "-m", f"Update version to v{package_version}"],
         check=True,
     )
-    subprocess.run(["git", "push", "origin", "HEAD:refs/heads/main"], check=True)
+    subprocess.run(["git", "push", "origin", "HEAD"], check=True)
 
 
 def update_version_in_files(new_version: str) -> tuple[str, ...]:
@@ -45,8 +47,9 @@ def update_version_in_files(new_version: str) -> tuple[str, ...]:
         "README.md": replace_readme_md,
     }
     for path, replacer in paths.items():
-        updated_content = replacer(content=Path(path).read_text())
-        Path(path).write_text(updated_content)
+        absolute_path = REPO_ROOT / path
+        updated_content = replacer(content=absolute_path.read_text())
+        absolute_path.write_text(updated_content)
 
     return tuple(paths.keys())
 

@@ -7,7 +7,8 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { createHash } from "node:crypto";
 
-const packageJsonVersion = "1.1.0";
+const packageJsonVersion = (require("../package.json") as { version: string })
+  .version;
 
 vi.mock("@actions/cache");
 vi.mock("@actions/core");
