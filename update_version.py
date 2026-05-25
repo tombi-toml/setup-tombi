@@ -1,6 +1,6 @@
+import json
 import argparse
 import re
-import json
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).parent
@@ -27,12 +27,22 @@ def read_package_version() -> str:
 
 def update_package_json(new_version: str) -> bool:
     package_json_path = REPO_ROOT / "package.json"
-    package_json = json.loads(package_json_path.read_text())
-    if package_json["version"] == new_version:
+    package_json_content = package_json_path.read_text()
+    package_json = json.loads(package_json_content)
+    current_version = package_json["version"]
+    if current_version == new_version:
         return False
 
-    package_json["version"] = new_version
-    package_json_path.write_text(f"{json.dumps(package_json, indent=2)}\n")
+    updated_content, replacements = re.subn(
+        r'("version"\s*:\s*")[^"]+(")',
+        rf"\g<1>{new_version}\g<2>",
+        package_json_content,
+        count=1,
+    )
+    if replacements != 1:
+        raise RuntimeError('Could not find "version" field in package.json')
+
+    package_json_path.write_text(updated_content)
     return True
 
 
@@ -48,14 +58,17 @@ def update_readme(new_version: str) -> bool:
 
     current_version = version_match.group(1)
     print(f"Current documented version: {current_version}")
-    if current_version == new_version:
-        return False
 
-    updated_content = re.sub(
+    updated_content, replacements = re.subn(
         r"uses: tombi-toml/setup-tombi@v\d+\.\d+\.\d+",
         f"uses: tombi-toml/setup-tombi@v{new_version}",
         readme_content,
     )
+    if replacements == 0:
+        raise RuntimeError("Could not find setup-tombi version references in README.md")
+    if updated_content == readme_content:
+        return False
+
     readme_path.write_text(updated_content)
     return True
 
