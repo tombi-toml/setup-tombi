@@ -23,7 +23,7 @@ describe("setup-tombi post action", () => {
         case "cache-enabled":
           return "true";
         case "cache-key":
-          return "setup-tombi-v1-linux-x64-latest-tmp-cache";
+          return "setup-tombi-v1-linux-x64-1.1.0-tmp-cache";
         case "cache-path":
           return "/tmp/cache";
         default:
@@ -40,7 +40,7 @@ describe("setup-tombi post action", () => {
 
     expect(cache.saveCache).toHaveBeenCalledWith(
       ["/tmp/cache"],
-      "setup-tombi-v1-linux-x64-latest-tmp-cache",
+      "setup-tombi-v1-linux-x64-1.1.0-tmp-cache",
     );
   });
 });

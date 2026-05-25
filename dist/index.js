@@ -41191,6 +41191,14 @@ function getInstallDir() {
 function getBinaryName() {
     return isWindows() ? "tombi.exe" : "tombi";
 }
+function getDefaultTombiVersion() {
+    const packageJsonPath = path.resolve(__dirname, "..", "package.json");
+    const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
+    if (typeof packageJson.version !== "string" || !packageJson.version.trim()) {
+        throw new Error(`Unable to determine the default Tombi version from ${packageJsonPath}`);
+    }
+    return packageJson.version.trim();
+}
 async function resolveRequestedVersion(versionInput, lockfileInput) {
     if (versionInput && lockfileInput) {
         throw new Error("Inputs `version` and `lockfile` are mutually exclusive.");
@@ -41203,7 +41211,7 @@ async function resolveRequestedVersion(versionInput, lockfileInput) {
         core.info(`Resolved Tombi version ${resolvedVersion} from ${lockfileInput}`);
         return resolvedVersion;
     }
-    return undefined;
+    return getDefaultTombiVersion();
 }
 async function run() {
     try {

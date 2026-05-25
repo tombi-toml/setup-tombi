@@ -7,13 +7,15 @@ This action sets up [Tombi](https://github.com/tombi-toml/tombi) in your GitHub 
 ### Basic usage
 
 ```yaml
-- uses: tombi-toml/setup-tombi@v1
+- uses: tombi-toml/setup-tombi@v1.1.0
 ```
+
+This is the recommended form from `setup-tombi@v1.1.0` onward. When `with.version` is omitted, the action installs the `tombi` CLI version that matches the `setup-tombi` release version.
 
 ### Install a specific version
 
 ```yaml
-- uses: tombi-toml/setup-tombi@v1
+- uses: tombi-toml/setup-tombi@v1.1.0
   with:
     version: '1.0.0'
 ```
@@ -21,7 +23,7 @@ This action sets up [Tombi](https://github.com/tombi-toml/tombi) in your GitHub 
 ### Install a version from a lock file
 
 ```yaml
-- uses: tombi-toml/setup-tombi@v1
+- uses: tombi-toml/setup-tombi@v1.1.0
   with:
     lockfile: 'uv.lock'
 ```
@@ -29,7 +31,7 @@ This action sets up [Tombi](https://github.com/tombi-toml/tombi) in your GitHub 
 ### Install with checksum verification
 
 ```yaml
-- uses: tombi-toml/setup-tombi@v1
+- uses: tombi-toml/setup-tombi@v1.1.0
   with:
     version: '1.0.0'
     checksum: 'sha256-checksum-here'
@@ -43,7 +45,7 @@ This action sets up [Tombi](https://github.com/tombi-toml/tombi) in your GitHub 
 Use `enable-cache: true` only when you want to force cache on, for example on self-hosted runners.
 
 ```yaml
-- uses: tombi-toml/setup-tombi@v1
+- uses: tombi-toml/setup-tombi@v1.1.0
   with:
     enable-cache: true
 ```
@@ -51,7 +53,7 @@ Use `enable-cache: true` only when you want to force cache on, for example on se
 ### Use a custom cache directory
 
 ```yaml
-- uses: tombi-toml/setup-tombi@v1
+- uses: tombi-toml/setup-tombi@v1.1.0
   with:
     enable-cache: true
   env:
@@ -63,7 +65,7 @@ Use `enable-cache: true` only when you want to force cache on, for example on se
 
 | Name | Description | Required | Default |
 |------|-------------|----------|---------|
-| `version` | Version of Tombi to install (e.g., "1.0.0", "latest"). Mutually exclusive with `lockfile` | No | - |
+| `version` | Version of Tombi to install (e.g., "1.0.0", "latest"). When omitted, installs the Tombi version that matches the `setup-tombi` release version. Mutually exclusive with `lockfile` | No | `setup-tombi` release version |
 | `lockfile` | Path to a lock file used to resolve Tombi version. Supported: `uv.lock`, `poetry.lock`, `pnpm-lock.yaml`, `package-lock.json`, `yarn.lock`, `bun.lock` | No | - |
 | `checksum` | SHA256 checksum to validate the downloaded executable | No | - |
 | `enable-cache` | Persist the Tombi cache using GitHub Actions cache. Supports `true`, `false`, and `auto` | No | `auto` |
@@ -86,9 +88,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: tombi-toml/setup-tombi@v1
-        with:
-          version: '1.0.0'
+      - uses: tombi-toml/setup-tombi@v1.1.0
       - name: Validate TOML files
         run: tombi lint
 ```
