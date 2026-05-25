@@ -4,66 +4,46 @@ name: Update Major Minor Tags
 on:
   push:
     tags:
-      - v[0-9]+.[0-9]+.[0-9]+
+      - v[0-9]*.[0-9]*.[0-9]*
 
 jobs:
   update-major-minor-tags:
-    name: Make sure major and minor tags are up to date on a patch release
+    name: Update major/minor tags
     runs-on: ubuntu-24.04-arm
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
         with:
-          node-version-file: ".node-version"
-      - name: Update Major Minor Tags
+          fetch-depth: 0
+      - name: Update major/minor tags
         run: |
-          set -x
+          set -eu
 
           cd "${GITHUB_WORKSPACE}" || exit
 
-          # Set up variables.
+          git fetch origin main --tags
+
           TAG="${GITHUB_REF#refs/tags/}" # v1.2.3
           MINOR="${TAG%.*}"              # v1.2
           MAJOR="${MINOR%.*}"            # v1
-          VERSION="${TAG#v}"             # 1.2.3
-          export VERSION
-
           MESSAGE="Release ${TAG}"
+
+          MAIN_SHA="$(git rev-parse origin/main)"
+          TAG_SHA="$(git rev-list -n 1 "${TAG}")"
+
+          if [ "${MAIN_SHA}" != "${TAG_SHA}" ]; then
+            echo "Refusing to update major/minor tags: tag ${TAG} (${TAG_SHA}) does not match origin/main (${MAIN_SHA})"
+            exit 1
+          fi
 
           # Set up Git.
           git config user.name "${GITHUB_ACTOR}"
           git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
 
-          git fetch origin main "refs/tags/${TAG}:refs/tags/${TAG}"
-          MAIN_SHA="$(git rev-parse origin/main)"
-          TAG_SHA="$(git rev-list -n 1 "${TAG}")"
-
-          if [ "${MAIN_SHA}" != "${TAG_SHA}" ]; then
-            echo "Refusing to update main: tag ${TAG} (${TAG_SHA}) does not match origin/main (${MAIN_SHA})"
-            exit 1
-          fi
-
-          # Sync package.json version on main with the pushed release tag.
-          git checkout -B main origin/main
-          node -e '
-            const fs = require("node:fs");
-            const path = "package.json";
-            const pkg = JSON.parse(fs.readFileSync(path, "utf8"));
-            pkg.version = process.env.VERSION;
-            fs.writeFileSync(path, `${JSON.stringify(pkg, null, 2)}\n`);
-          '
-
-          if ! git diff --quiet -- package.json; then
-            git add package.json
-            git commit -m "Update package version to ${TAG}"
-            git push origin main
-          fi
-
           # Update MAJOR/MINOR tag
-          git tag -fa "${MAJOR}" -m "${MESSAGE}"
-          git tag -fa "${MINOR}" -m "${MESSAGE}"
+          git tag -fa "${MAJOR}" origin/main -m "${MESSAGE}"
+          git tag -fa "${MINOR}" origin/main -m "${MESSAGE}"
 
           # Push
           git push --force origin "${MINOR}"

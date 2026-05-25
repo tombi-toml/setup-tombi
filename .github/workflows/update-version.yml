@@ -1,18 +1,52 @@
 name: Update Version
 on:
   workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to sync into package.json and README.md"
+        required: true
 
 jobs:
   release:
     name: "Update version"
-    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - run: git config --global user.name 'Github Actions'
+      - run: git config --global user.name 'GitHub Actions'
       - run: git config --global user.email '41898282+github-actions[bot]@users.noreply.github.com'
 
-      - run: python3 update_version.py
+      - name: Sync package.json and README.md
+        run: |
+          set -eu
+
+          if [ "${GITHUB_REF}" != "refs/heads/main" ]; then
+            echo "workflow_dispatch version updates must run from main"
+            exit 1
+          fi
+
+          if [ -z "${INPUT_VERSION}" ]; then
+            echo "inputs.version is required"
+            exit 1
+          fi
+
+          python3 update_version.py --version "${INPUT_VERSION}"
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+
+      - name: Commit and push if needed
+        run: |
+          if git diff --quiet -- package.json README.md; then
+            echo "No version changes to commit"
+            exit 0
+          fi
+
+          VERSION="$(python3 -c 'import json, pathlib; print(json.loads(pathlib.Path("package.json").read_text())["version"])')"
+
+          git add package.json README.md
+          git commit -m "Update version to v${VERSION}"
+          git push origin HEAD
