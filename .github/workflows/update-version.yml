@@ -1,22 +1,18 @@
-name: Update Readme Version
+name: Update Version
 on:
   workflow_dispatch:
 
 jobs:
   release:
-    name: "Update readme version"
+    name: "Update version"
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
-        with:
-          version: "latest"
 
       - run: git config --global user.name 'Github Actions'
       - run: git config --global user.email '41898282+github-actions[bot]@users.noreply.github.com'
 
-      - run: uv run --no-project update_readme_version.py
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - run: python3 update_version.py

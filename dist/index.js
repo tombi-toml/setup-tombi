@@ -41191,6 +41191,14 @@ function getInstallDir() {
 function getBinaryName() {
     return isWindows() ? "tombi.exe" : "tombi";
 }
+function getDefaultTombiVersion() {
+    const packageJsonPath = path.resolve(__dirname, "..", "package.json");
+    const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
+    if (typeof packageJson.version !== "string" || !packageJson.version.trim()) {
+        throw new Error(`Unable to determine the default Tombi version from ${packageJsonPath}`);
+    }
+    return packageJson.version.trim();
+}
 async function resolveRequestedVersion(versionInput, lockfileInput) {
     if (versionInput && lockfileInput) {
         throw new Error("Inputs `version` and `lockfile` are mutually exclusive.");
@@ -41203,7 +41211,7 @@ async function resolveRequestedVersion(versionInput, lockfileInput) {
         core.info(`Resolved Tombi version ${resolvedVersion} from ${lockfileInput}`);
         return resolvedVersion;
     }
-    return undefined;
+    return getDefaultTombiVersion();
 }
 async function run() {
     try {
@@ -41215,7 +41223,7 @@ async function run() {
         const cacheMode = (0, cache_1.parseCacheMode)(enableCacheInput);
         const enableCache = (0, cache_1.shouldEnableCache)(cacheMode);
         if (enableCache) {
-            await (0, cache_1.restoreTombiCache)(version || "latest");
+            await (0, cache_1.restoreTombiCache)(version);
         }
         else {
             core.info("Tombi cache is disabled.");
@@ -41228,13 +41236,9 @@ async function run() {
         core.info("Downloading Tombi install script...");
         const scriptPath = await tc.downloadTool(installScriptUrl);
         // Build arguments
-        const args = [];
-        if (version) {
-            args.push(`--version ${version}`);
-        }
-        args.push(`--install-dir "${installDir}"`);
+        const args = [`--version ${version}`, `--install-dir "${installDir}"`];
         // Execute the install script using bash
-        core.info(`Installing Tombi${version ? ` version ${version}` : ""}...`);
+        core.info(`Installing Tombi version ${version}...`);
         const command = `bash "${scriptPath}" ${args.join(" ")}`.trim();
         core.info(`Execute: ${command}`);
         (0, node_child_process_1.execSync)(command, { stdio: "inherit" });

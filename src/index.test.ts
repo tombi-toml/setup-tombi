@@ -7,6 +7,9 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { createHash } from "node:crypto";
 
+const packageJsonVersion = (require("../package.json") as { version: string })
+  .version;
+
 vi.mock("@actions/cache");
 vi.mock("@actions/core");
 vi.mock("@actions/tool-cache");
@@ -16,6 +19,7 @@ vi.mock("node:fs", async () => {
     ...actual,
     existsSync: vi.fn(),
     mkdirSync: vi.fn(),
+    readFileSync: vi.fn(),
     promises: {
       ...actual.promises,
       readFile: vi.fn(),
@@ -43,7 +47,7 @@ describe("setup-tombi action", () => {
     > = {},
   ): void {
     const inputValues = {
-      version: "latest",
+      version: "",
       lockfile: "",
       checksum: "",
       "enable-cache": "auto",
@@ -78,6 +82,9 @@ describe("setup-tombi action", () => {
     vi.mocked(tc.downloadTool).mockResolvedValue(mockScriptPath);
     vi.mocked(cache.restoreCache).mockResolvedValue(undefined);
     vi.mocked(fs.existsSync).mockReturnValue(true);
+    vi.mocked(fs.readFileSync).mockReturnValue(
+      JSON.stringify({ version: packageJsonVersion }),
+    );
     vi.mocked(fs.promises.readFile).mockResolvedValue(
       Buffer.from("mock-content"),
     );
@@ -104,11 +111,11 @@ describe("setup-tombi action", () => {
       expect(tc.downloadTool).toHaveBeenCalledWith(installScriptUrl);
       expect(cache.restoreCache).toHaveBeenCalledWith(
         ["/home/user/.cache/tombi"],
-        "setup-tombi-v1-linux-x64-latest--home-user-.cache-tombi",
+        `setup-tombi-v1-linux-x64-${packageJsonVersion}--home-user-.cache-tombi`,
         ["setup-tombi-v1-linux-x64-"],
       );
       expect(execSyncMock).toHaveBeenCalledWith(
-        `bash "${mockScriptPath}" --version latest --install-dir "/home/user/.local/bin"`,
+        `bash "${mockScriptPath}" --version ${packageJsonVersion} --install-dir "/home/user/.local/bin"`,
         { stdio: "inherit" },
       );
       expect(core.addPath).toHaveBeenCalledWith("/home/user/.local/bin");
@@ -118,12 +125,11 @@ describe("setup-tombi action", () => {
       );
     });
 
-    it("installs without version arg when not specified", async () => {
-      setInputs({ version: "" });
+    it("installs the setup-tombi release version by default", async () => {
       await runAction();
 
       expect(execSyncMock).toHaveBeenCalledWith(
-        `bash "${mockScriptPath}" --install-dir "/home/user/.local/bin"`,
+        `bash "${mockScriptPath}" --version ${packageJsonVersion} --install-dir "/home/user/.local/bin"`,
         { stdio: "inherit" },
       );
     });
@@ -153,7 +159,7 @@ describe("setup-tombi action", () => {
 
       expect(cache.restoreCache).toHaveBeenCalledWith(
         ["/tmp/tombi-cache"],
-        "setup-tombi-v1-linux-x64-latest--tmp-tombi-cache",
+        `setup-tombi-v1-linux-x64-${packageJsonVersion}--tmp-tombi-cache`,
         ["setup-tombi-v1-linux-x64-"],
       );
       expect(core.exportVariable).toHaveBeenCalledWith(
@@ -172,7 +178,7 @@ describe("setup-tombi action", () => {
       expect(core.warning).toHaveBeenCalledWith("cache backend unavailable");
       expect(core.setOutput).toHaveBeenCalledWith("cache-hit", "false");
       expect(execSyncMock).toHaveBeenCalledWith(
-        `bash "${mockScriptPath}" --version latest --install-dir "/home/user/.local/bin"`,
+        `bash "${mockScriptPath}" --version ${packageJsonVersion} --install-dir "/home/user/.local/bin"`,
         { stdio: "inherit" },
       );
       expect(core.setFailed).not.toHaveBeenCalled();
@@ -224,7 +230,7 @@ describe("setup-tombi action", () => {
 
       expect(cache.restoreCache).toHaveBeenCalledWith(
         [path.join("C:\\Users\\user\\AppData\\Local", "tombi", "cache")],
-        "setup-tombi-v1-win32-x64-latest-C-Users-user-AppData-Local-tombi-cache",
+        `setup-tombi-v1-win32-x64-${packageJsonVersion}-C-Users-user-AppData-Local-tombi-cache`,
         ["setup-tombi-v1-win32-x64-"],
       );
     });
@@ -242,7 +248,7 @@ describe("setup-tombi action", () => {
 
       expect(tc.downloadTool).toHaveBeenCalledWith(installScriptUrl);
       expect(execSyncMock).toHaveBeenCalledWith(
-        `bash "${mockScriptPath}" --version latest --install-dir "/Users/user/.local/bin"`,
+        `bash "${mockScriptPath}" --version ${packageJsonVersion} --install-dir "/Users/user/.local/bin"`,
         { stdio: "inherit" },
       );
     });
@@ -252,7 +258,7 @@ describe("setup-tombi action", () => {
 
       expect(cache.restoreCache).toHaveBeenCalledWith(
         ["/Users/user/Library/Caches/tombi"],
-        "setup-tombi-v1-darwin-x64-latest--Users-user-Library-Caches-tombi",
+        `setup-tombi-v1-darwin-x64-${packageJsonVersion}--Users-user-Library-Caches-tombi`,
         ["setup-tombi-v1-darwin-x64-"],
       );
     });
