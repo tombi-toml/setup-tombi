@@ -12,13 +12,42 @@ jobs:
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - name: Create release with generated notes
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -eu
 
+          cd "${GITHUB_WORKSPACE}" || exit
+
           TAG="${GITHUB_REF#refs/tags/}"
+
+          case "${TAG}" in
+            v[0-9]*.[0-9]*.[0-9]*) ;;
+            *)
+              echo "Skipping non-release tag: ${TAG}"
+              exit 0
+              ;;
+          esac
+
+          if ! printf '%s\n' "${TAG}" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "Skipping non-semver release tag: ${TAG}"
+            exit 0
+          fi
+
+          git fetch origin main --tags
+
+          MAIN_SHA="$(git rev-parse origin/main)"
+          TAG_SHA="$(git rev-list -n 1 "${TAG}")"
+
+          if [ "${MAIN_SHA}" != "${TAG_SHA}" ]; then
+            echo "Refusing to create release: tag ${TAG} (${TAG_SHA}) does not match origin/main (${MAIN_SHA})"
+            exit 1
+          fi
 
           if gh release view "${TAG}" >/dev/null 2>&1; then
             echo "Release for ${TAG} already exists"
