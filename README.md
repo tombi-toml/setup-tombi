@@ -7,7 +7,7 @@ This action sets up [Tombi](https://github.com/tombi-toml/tombi) in your GitHub 
 ### Basic usage
 
 ```yaml
-- uses: tombi-toml/setup-tombi@v1.1.0
+- uses: tombi-toml/setup-tombi@v1.1.1
 ```
 
 This is the recommended form from `setup-tombi@v1.1.0` onward. When `with.version` is omitted, the action installs the `tombi` CLI version that matches the `setup-tombi` release version.
@@ -15,7 +15,7 @@ This is the recommended form from `setup-tombi@v1.1.0` onward. When `with.versio
 ### Install a specific version
 
 ```yaml
-- uses: tombi-toml/setup-tombi@v1.1.0
+- uses: tombi-toml/setup-tombi@v1.1.1
   with:
     version: '1.0.0'
 ```
@@ -23,7 +23,7 @@ This is the recommended form from `setup-tombi@v1.1.0` onward. When `with.versio
 ### Install a version from a lock file
 
 ```yaml
-- uses: tombi-toml/setup-tombi@v1.1.0
+- uses: tombi-toml/setup-tombi@v1.1.1
   with:
     lockfile: 'uv.lock'
 ```
@@ -31,7 +31,7 @@ This is the recommended form from `setup-tombi@v1.1.0` onward. When `with.versio
 ### Install with checksum verification
 
 ```yaml
-- uses: tombi-toml/setup-tombi@v1.1.0
+- uses: tombi-toml/setup-tombi@v1.1.1
   with:
     version: '1.0.0'
     checksum: 'sha256-checksum-here'
@@ -45,7 +45,7 @@ This is the recommended form from `setup-tombi@v1.1.0` onward. When `with.versio
 Use `enable-cache: true` only when you want to force cache on, for example on self-hosted runners.
 
 ```yaml
-- uses: tombi-toml/setup-tombi@v1.1.0
+- uses: tombi-toml/setup-tombi@v1.1.1
   with:
     enable-cache: true
 ```
@@ -53,7 +53,7 @@ Use `enable-cache: true` only when you want to force cache on, for example on se
 ### Use a custom cache directory
 
 ```yaml
-- uses: tombi-toml/setup-tombi@v1.1.0
+- uses: tombi-toml/setup-tombi@v1.1.1
   with:
     enable-cache: true
   env:
@@ -88,7 +88,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: tombi-toml/setup-tombi@v1.1.0
+      - uses: tombi-toml/setup-tombi@v1.1.1
       - name: Validate TOML files
         run: tombi lint
 ```
