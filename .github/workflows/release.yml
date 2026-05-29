@@ -1,0 +1,137 @@
+name: Release
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release. Accepts both 1.2.3 and v1.2.3."
+        required: true
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - run: git config --global user.name "GitHub Actions"
+      - run: git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Prepare release commit
+        id: prepare
+        run: |
+          set -euo pipefail
+
+          if [ "${GITHUB_REF}" != "refs/heads/main" ]; then
+            echo "workflow_dispatch releases must run from main"
+            exit 1
+          fi
+
+          if [ -z "${INPUT_VERSION}" ]; then
+            echo "inputs.version is required"
+            exit 1
+          fi
+
+          VERSION="$(python3 -c 'import sys; print(sys.argv[1].removeprefix("v").strip())' "${INPUT_VERSION}")"
+          if ! printf '%s\n' "${VERSION}" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "inputs.version must be a semantic version in MAJOR.MINOR.PATCH format"
+            exit 1
+          fi
+
+          TAG="v${VERSION}"
+
+          python3 update_version.py --version "${VERSION}"
+
+          if git diff --quiet -- package.json README.md; then
+            echo "No version changes to commit"
+          else
+            git add package.json README.md
+            git commit -m "Update version to ${TAG}"
+            git push origin HEAD:main
+          fi
+
+          CURRENT_VERSION="$(python3 -c 'import json, pathlib; print(json.loads(pathlib.Path("package.json").read_text())["version"])')"
+          if [ "${CURRENT_VERSION}" != "${VERSION}" ]; then
+            echo "package.json version ${CURRENT_VERSION} does not match requested release version ${VERSION}"
+            exit 1
+          fi
+
+          RELEASE_SHA="$(git rev-parse HEAD)"
+
+          echo "tag=${TAG}" >> "${GITHUB_OUTPUT}"
+          echo "release_sha=${RELEASE_SHA}" >> "${GITHUB_OUTPUT}"
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+
+      - name: Create release tag
+        run: |
+          set -euo pipefail
+
+          git fetch origin --tags
+
+          if git rev-parse -q --verify "refs/tags/${TAG}" >/dev/null; then
+            TAG_SHA="$(git rev-list -n 1 "${TAG}")"
+
+            if [ "${TAG_SHA}" != "${RELEASE_SHA}" ]; then
+              echo "Refusing to reuse existing tag ${TAG}: points to ${TAG_SHA}, expected ${RELEASE_SHA}"
+              exit 1
+            fi
+
+            echo "Tag ${TAG} already exists"
+            exit 0
+          fi
+
+          git tag -a "${TAG}" "${RELEASE_SHA}" -m "Release ${TAG}"
+          git push origin "refs/tags/${TAG}"
+        env:
+          TAG: ${{ steps.prepare.outputs.tag }}
+          RELEASE_SHA: ${{ steps.prepare.outputs.release_sha }}
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.prepare.outputs.tag }}
+          RELEASE_SHA: ${{ steps.prepare.outputs.release_sha }}
+        run: |
+          set -euo pipefail
+
+          if gh release view "${TAG}" >/dev/null 2>&1; then
+            echo "Release for ${TAG} already exists"
+            exit 0
+          fi
+
+          gh release create "${TAG}" \
+            --target "${RELEASE_SHA}" \
+            --verify-tag \
+            --generate-notes \
+            --title "${TAG}"
+
+      - name: Update major/minor tags
+        env:
+          TAG: ${{ steps.prepare.outputs.tag }}
+          RELEASE_SHA: ${{ steps.prepare.outputs.release_sha }}
+        run: |
+          set -euo pipefail
+
+          if ! printf '%s\n' "${TAG}" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "Refusing to update major/minor tags for non-semver tag ${TAG}"
+            exit 1
+          fi
+
+          MINOR="${TAG%.*}"
+          MAJOR="${MINOR%.*}"
+          MESSAGE="Release ${TAG}"
+
+          git tag -fa "${MAJOR}" "${RELEASE_SHA}" -m "${MESSAGE}"
+          git tag -fa "${MINOR}" "${RELEASE_SHA}" -m "${MESSAGE}"
+
+          git push --force origin "refs/tags/${MAJOR}"
+          git push --force origin "refs/tags/${MINOR}"
