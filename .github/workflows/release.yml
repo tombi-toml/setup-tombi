@@ -110,10 +110,7 @@ jobs:
 
           VERSION="${TAG#v}"
           TOMBI_RELEASE_URL="https://github.com/tombi-toml/tombi/releases/tag/v${VERSION}"
-          NOTES=$(cat <<EOF
-          This setup-tombi release matches [tombi v${VERSION}](${TOMBI_RELEASE_URL}).
-          EOF
-          )
+          NOTES="This setup-tombi release matches [tombi v${VERSION}](${TOMBI_RELEASE_URL})."
 
           gh release create "${TAG}" \
             --target "${RELEASE_SHA}" \
