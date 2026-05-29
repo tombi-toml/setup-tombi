@@ -41,6 +41,11 @@ jobs:
           fi
 
           VERSION="$(python3 -c 'import sys; print(sys.argv[1].removeprefix("v").strip())' "${INPUT_VERSION}")"
+          if ! printf '%s\n' "${VERSION}" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "inputs.version must be a semantic version in MAJOR.MINOR.PATCH format"
+            exit 1
+          fi
+
           TAG="v${VERSION}"
 
           python3 update_version.py --version "${VERSION}"
@@ -115,6 +120,11 @@ jobs:
           RELEASE_SHA: ${{ steps.prepare.outputs.release_sha }}
         run: |
           set -euo pipefail
+
+          if ! printf '%s\n' "${TAG}" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "Refusing to update major/minor tags for non-semver tag ${TAG}"
+            exit 1
+          fi
 
           MINOR="${TAG%.*}"
           MAJOR="${MINOR%.*}"
