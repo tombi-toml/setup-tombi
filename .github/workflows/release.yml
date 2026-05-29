@@ -108,10 +108,18 @@ jobs:
             exit 0
           fi
 
+          VERSION="${TAG#v}"
+          TOMBI_RELEASE_URL="https://github.com/tombi-toml/tombi/releases/tag/v${VERSION}"
+          NOTES=$(cat <<EOF
+          This setup-tombi release matches [tombi v${VERSION}](${TOMBI_RELEASE_URL}).
+          EOF
+          )
+
           gh release create "${TAG}" \
             --target "${RELEASE_SHA}" \
             --verify-tag \
             --generate-notes \
+            --notes "${NOTES}" \
             --title "${TAG}"
 
       - name: Update major/minor tags
