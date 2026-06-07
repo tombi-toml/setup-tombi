@@ -80,7 +80,7 @@ Use `enable-cache: true` only when you want to force cache on, for example on se
 | `lockfile` | Path to a lock file used to resolve Tombi version. Supported: `uv.lock`, `poetry.lock`, `pnpm-lock.yaml`, `package-lock.json`, `yarn.lock`, `bun.lock` | No | - |
 | `binary-checksum` | SHA256 checksum to validate the installed executable binary | No | - |
 | `archive-checksum` | SHA256 checksum to validate the downloaded archive before extraction. Accepts `<hex>` or `sha256:<hex>` | No | - |
-| `checksum` | Deprecated. Alias for `binary-checksum` | No | - |
+| `checksum` | ⚠️ Deprecated. Alias for `binary-checksum` | No | - |
 | `enable-cache` | Persist the Tombi cache using GitHub Actions cache. Supports `true`, `false`, and `auto` | No | `auto` |
 
 ## Example workflow
