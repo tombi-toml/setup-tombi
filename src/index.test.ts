@@ -126,7 +126,13 @@ describe("setup-tombi action", () => {
       );
       expect(execFileSyncMock).toHaveBeenCalledWith(
         "bash",
-        [mockScriptPath, "--version", packageJsonVersion, "--install-dir", "/home/user/.local/bin"],
+        [
+          mockScriptPath,
+          "--version",
+          packageJsonVersion,
+          "--install-dir",
+          "/home/user/.local/bin",
+        ],
         { stdio: "inherit" },
       );
       expect(core.addPath).toHaveBeenCalledWith("/home/user/.local/bin");
@@ -141,7 +147,13 @@ describe("setup-tombi action", () => {
 
       expect(execFileSyncMock).toHaveBeenCalledWith(
         "bash",
-        [mockScriptPath, "--version", packageJsonVersion, "--install-dir", "/home/user/.local/bin"],
+        [
+          mockScriptPath,
+          "--version",
+          packageJsonVersion,
+          "--install-dir",
+          "/home/user/.local/bin",
+        ],
         { stdio: "inherit" },
       );
     });
@@ -160,7 +172,13 @@ describe("setup-tombi action", () => {
       );
       expect(execFileSyncMock).toHaveBeenCalledWith(
         "bash",
-        [mockScriptPath, "--version", "0.7.33", "--install-dir", "/home/user/.local/bin"],
+        [
+          mockScriptPath,
+          "--version",
+          "0.7.33",
+          "--install-dir",
+          "/home/user/.local/bin",
+        ],
         { stdio: "inherit" },
       );
     });
@@ -192,7 +210,13 @@ describe("setup-tombi action", () => {
       expect(core.setOutput).toHaveBeenCalledWith("cache-hit", "false");
       expect(execFileSyncMock).toHaveBeenCalledWith(
         "bash",
-        [mockScriptPath, "--version", packageJsonVersion, "--install-dir", "/home/user/.local/bin"],
+        [
+          mockScriptPath,
+          "--version",
+          packageJsonVersion,
+          "--install-dir",
+          "/home/user/.local/bin",
+        ],
         { stdio: "inherit" },
       );
       expect(core.setFailed).not.toHaveBeenCalled();
@@ -264,7 +288,13 @@ describe("setup-tombi action", () => {
       expect(tc.downloadTool).toHaveBeenCalledWith(installScriptUrl);
       expect(execFileSyncMock).toHaveBeenCalledWith(
         "bash",
-        [mockScriptPath, "--version", packageJsonVersion, "--install-dir", "/Users/user/.local/bin"],
+        [
+          mockScriptPath,
+          "--version",
+          packageJsonVersion,
+          "--install-dir",
+          "/Users/user/.local/bin",
+        ],
         { stdio: "inherit" },
       );
     });
@@ -385,7 +415,15 @@ describe("setup-tombi action", () => {
       expect(tc.downloadTool).toHaveBeenCalledWith(installScriptUrl);
       expect(execFileSyncMock).toHaveBeenCalledWith(
         "bash",
-        [mockScriptPath, "--version", "1.1.1", "--install-dir", "/home/user/.local/bin", "--checksum", expectedChecksum],
+        [
+          mockScriptPath,
+          "--version",
+          "1.1.1",
+          "--install-dir",
+          "/home/user/.local/bin",
+          "--checksum",
+          expectedChecksum,
+        ],
         { stdio: "inherit" },
       );
     });
@@ -397,7 +435,15 @@ describe("setup-tombi action", () => {
 
       expect(execFileSyncMock).toHaveBeenCalledWith(
         "bash",
-        [mockScriptPath, "--version", "1.1.1", "--install-dir", "/home/user/.local/bin", "--checksum", "sha256:1234"],
+        [
+          mockScriptPath,
+          "--version",
+          "1.1.1",
+          "--install-dir",
+          "/home/user/.local/bin",
+          "--checksum",
+          "sha256:1234",
+        ],
         { stdio: "inherit" },
       );
       expect(core.setFailed).not.toHaveBeenCalled();
@@ -410,14 +456,22 @@ describe("setup-tombi action", () => {
 
       expect(execFileSyncMock).toHaveBeenCalledWith(
         "bash",
-        [mockScriptPath, "--version", "1.1.1", "--install-dir", "/home/user/.local/bin", "--checksum", "sha256:1234"],
+        [
+          mockScriptPath,
+          "--version",
+          "1.1.1",
+          "--install-dir",
+          "/home/user/.local/bin",
+          "--checksum",
+          "sha256:1234",
+        ],
         { stdio: "inherit" },
       );
     });
 
     it("passes archive checksum as a literal argument", async () => {
       setInputs({
-        "archive-checksum": 'sha256:$(echo injected)`uname`',
+        "archive-checksum": "sha256:$(echo injected)`uname`",
         version: "1.1.1",
       });
 
