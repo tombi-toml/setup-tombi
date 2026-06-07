@@ -36,7 +36,7 @@ For the executable binary
 - uses: tombi-toml/setup-tombi@v1.1.2
   with:
     version: '1.0.0'
-    binary-checksum: 'sha256-checksum-here'
+    binary-checksum: '<sha256-checksum>'
 ```
 
 For the archive
@@ -45,7 +45,7 @@ For the archive
 - uses: tombi-toml/setup-tombi@v1.1.2
   with:
     version: '1.0.0'
-    archive-checksum: 'sha256:archive-checksum-here'
+    archive-checksum: '<sha256-checksum>'
 ```
 
 ### Cache behavior
