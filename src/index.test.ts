@@ -43,13 +43,23 @@ describe("setup-tombi action", () => {
 
   function setInputs(
     overrides: Partial<
-      Record<"version" | "lockfile" | "checksum" | "enable-cache", string>
+      Record<
+        | "version"
+        | "lockfile"
+        | "binary-checksum"
+        | "checksum"
+        | "archive-checksum"
+        | "enable-cache",
+        string
+      >
     > = {},
   ): void {
     const inputValues = {
       version: "",
       lockfile: "",
+      "binary-checksum": "",
       checksum: "",
+      "archive-checksum": "",
       "enable-cache": "auto",
       ...overrides,
     };
@@ -265,7 +275,25 @@ describe("setup-tombi action", () => {
   });
 
   describe("checksum verification", () => {
-    it("verifies checksum when provided", async () => {
+    it("verifies binary checksum when provided", async () => {
+      const mockFileContent = "mock-file-content";
+      const hash = createHash("sha256");
+      hash.update(mockFileContent);
+      const expectedChecksum = hash.digest("hex");
+
+      setInputs({ "binary-checksum": expectedChecksum, version: "0.7.0" });
+
+      vi.mocked(fs.promises.readFile).mockResolvedValue(
+        Buffer.from(mockFileContent),
+      );
+
+      await runAction();
+
+      expect(fs.promises.readFile).toHaveBeenCalled();
+      expect(core.info).toHaveBeenCalledWith("Checksum verification passed");
+    });
+
+    it("uses checksum as an alias for binary checksum", async () => {
       const mockFileContent = "mock-file-content";
       const hash = createHash("sha256");
       hash.update(mockFileContent);
@@ -283,8 +311,30 @@ describe("setup-tombi action", () => {
       expect(core.info).toHaveBeenCalledWith("Checksum verification passed");
     });
 
-    it("fails when checksum does not match", async () => {
-      setInputs({ checksum: "incorrect-checksum", version: "0.7.0" });
+    it("prefers binary checksum over checksum when both are provided", async () => {
+      const mockFileContent = "mock-file-content";
+      const hash = createHash("sha256");
+      hash.update(mockFileContent);
+      const expectedChecksum = hash.digest("hex");
+
+      setInputs({
+        "binary-checksum": expectedChecksum,
+        checksum: "incorrect-checksum",
+        version: "0.7.0",
+      });
+
+      vi.mocked(fs.promises.readFile).mockResolvedValue(
+        Buffer.from(mockFileContent),
+      );
+
+      await runAction();
+
+      expect(core.info).toHaveBeenCalledWith("Checksum verification passed");
+      expect(core.setFailed).not.toHaveBeenCalled();
+    });
+
+    it("fails when binary checksum does not match", async () => {
+      setInputs({ "binary-checksum": "incorrect-checksum", version: "0.7.0" });
 
       vi.mocked(fs.promises.readFile).mockResolvedValue(
         Buffer.from("mock-content"),
@@ -295,6 +345,33 @@ describe("setup-tombi action", () => {
       expect(core.setFailed).toHaveBeenCalledWith(
         expect.stringContaining("Checksum verification failed"),
       );
+    });
+
+    it("passes archive checksum to install.sh when provided", async () => {
+      const expectedChecksum = `sha256:${"a".repeat(64)}`;
+
+      setInputs({ "archive-checksum": expectedChecksum, version: "1.1.1" });
+
+      await runAction();
+
+      expect(tc.downloadTool).toHaveBeenCalledTimes(1);
+      expect(tc.downloadTool).toHaveBeenCalledWith(installScriptUrl);
+      expect(execSyncMock).toHaveBeenCalledWith(
+        `bash "${mockScriptPath}" --version 1.1.1 --install-dir "/home/user/.local/bin" --checksum "${expectedChecksum}"`,
+        { stdio: "inherit" },
+      );
+    });
+
+    it("leaves archive checksum validation to install.sh", async () => {
+      setInputs({ "archive-checksum": "sha256:1234", version: "1.1.1" });
+
+      await runAction();
+
+      expect(execSyncMock).toHaveBeenCalledWith(
+        `bash "${mockScriptPath}" --version 1.1.1 --install-dir "/home/user/.local/bin" --checksum "sha256:1234"`,
+        { stdio: "inherit" },
+      );
+      expect(core.setFailed).not.toHaveBeenCalled();
     });
   });
 

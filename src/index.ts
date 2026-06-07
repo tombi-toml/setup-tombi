@@ -62,7 +62,11 @@ export async function run(): Promise<void> {
   try {
     const versionInput = core.getInput("version").trim();
     const lockfileInput = core.getInput("lockfile").trim();
-    const checksum = core.getInput("checksum") || undefined;
+    const binaryChecksum =
+      core.getInput("binary-checksum") ||
+      core.getInput("checksum") ||
+      undefined;
+    const archiveChecksum = core.getInput("archive-checksum") || undefined;
     const enableCacheInput = core.getInput("enable-cache");
     const version = await resolveRequestedVersion(versionInput, lockfileInput);
     const cacheMode = parseCacheMode(enableCacheInput);
@@ -85,6 +89,9 @@ export async function run(): Promise<void> {
 
     // Build arguments
     const args = [`--version ${version}`, `--install-dir "${installDir}"`];
+    if (archiveChecksum) {
+      args.push(`--checksum "${archiveChecksum}"`);
+    }
 
     // Execute the install script using bash
     core.info(`Installing Tombi version ${version}...`);
@@ -99,15 +106,15 @@ export async function run(): Promise<void> {
       throw new Error(`Binary not found at ${binaryPath}`);
     }
 
-    if (checksum) {
+    if (binaryChecksum) {
       const fileBuffer = await fs.promises.readFile(binaryPath);
       const hashSum = createHash("sha256");
       hashSum.update(fileBuffer);
       const hex = hashSum.digest("hex");
 
-      if (hex !== checksum) {
+      if (hex !== binaryChecksum) {
         throw new Error(
-          `Checksum verification failed. Expected: ${checksum}, Got: ${hex}`,
+          `Checksum verification failed. Expected: ${binaryChecksum}, Got: ${hex}`,
         );
       }
       core.info("Checksum verification passed");
