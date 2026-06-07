@@ -30,11 +30,22 @@ This is the recommended form from `setup-tombi@v1.1.0` onward. When `with.versio
 
 ### Install with checksum verification
 
+For the executable binary
+
 ```yaml
 - uses: tombi-toml/setup-tombi@v1.1.1
   with:
     version: '1.0.0'
-    checksum: 'sha256-checksum-here'
+    binary-checksum: 'sha256-checksum-here'
+```
+
+For the archive
+
+```yaml
+- uses: tombi-toml/setup-tombi@v1.1.1
+  with:
+    version: '1.0.0'
+    archive-checksum: 'sha256:archive-checksum-here'
 ```
 
 ### Cache behavior
@@ -67,7 +78,9 @@ Use `enable-cache: true` only when you want to force cache on, for example on se
 |------|-------------|----------|---------|
 | `version` | Version of Tombi to install (e.g., "1.0.0", "latest"). When omitted, installs the Tombi version that matches the `setup-tombi` release version. Mutually exclusive with `lockfile` | No | `setup-tombi` release version |
 | `lockfile` | Path to a lock file used to resolve Tombi version. Supported: `uv.lock`, `poetry.lock`, `pnpm-lock.yaml`, `package-lock.json`, `yarn.lock`, `bun.lock` | No | - |
-| `checksum` | SHA256 checksum to validate the downloaded executable | No | - |
+| `binary-checksum` | SHA256 checksum to validate the installed executable binary | No | - |
+| `archive-checksum` | SHA256 checksum to validate the downloaded archive before extraction. Accepts `<hex>` or `sha256:<hex>` | No | - |
+| `checksum` | Deprecated. Alias for `binary-checksum` | No | - |
 | `enable-cache` | Persist the Tombi cache using GitHub Actions cache. Supports `true`, `false`, and `auto` | No | `auto` |
 
 ## Example workflow

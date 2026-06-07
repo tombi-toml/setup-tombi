@@ -4,7 +4,7 @@ import * as path from "node:path";
 import * as os from "node:os";
 import * as fs from "node:fs";
 import { createHash } from "node:crypto";
-import { execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 import { parseCacheMode, restoreTombiCache, shouldEnableCache } from "./cache";
 import { resolveVersionFromLockfile } from "./lockfile";
 
@@ -35,6 +35,23 @@ function getDefaultTombiVersion(): string {
   return packageJson.version.trim();
 }
 
+function getOptionalTrimmedInput(name: string): string | undefined {
+  const value = core.getInput(name).trim();
+  return value || undefined;
+}
+
+function normalizeBinaryChecksumInput(): string | undefined {
+  const checksum =
+    getOptionalTrimmedInput("binary-checksum") ??
+    getOptionalTrimmedInput("checksum");
+
+  if (!checksum) {
+    return undefined;
+  }
+
+  return checksum.replace(/^sha256:/i, "").toLowerCase();
+}
+
 async function resolveRequestedVersion(
   versionInput: string,
   lockfileInput: string,
@@ -62,7 +79,8 @@ export async function run(): Promise<void> {
   try {
     const versionInput = core.getInput("version").trim();
     const lockfileInput = core.getInput("lockfile").trim();
-    const checksum = core.getInput("checksum") || undefined;
+    const binaryChecksum = normalizeBinaryChecksumInput();
+    const archiveChecksum = getOptionalTrimmedInput("archive-checksum");
     const enableCacheInput = core.getInput("enable-cache");
     const version = await resolveRequestedVersion(versionInput, lockfileInput);
     const cacheMode = parseCacheMode(enableCacheInput);
@@ -84,13 +102,15 @@ export async function run(): Promise<void> {
     const scriptPath = await tc.downloadTool(installScriptUrl);
 
     // Build arguments
-    const args = [`--version ${version}`, `--install-dir "${installDir}"`];
+    const args = ["--version", version, "--install-dir", installDir];
+    if (archiveChecksum) {
+      args.push("--checksum", archiveChecksum);
+    }
 
     // Execute the install script using bash
     core.info(`Installing Tombi version ${version}...`);
-    const command = `bash "${scriptPath}" ${args.join(" ")}`.trim();
-    core.info(`Execute: ${command}`);
-    execSync(command, { stdio: "inherit" });
+    core.info(`Execute: bash "${scriptPath}" ${args.join(" ")}`);
+    execFileSync("bash", [scriptPath, ...args], { stdio: "inherit" });
 
     const binaryPath = path.join(installDir, getBinaryName());
 
@@ -99,21 +119,21 @@ export async function run(): Promise<void> {
       throw new Error(`Binary not found at ${binaryPath}`);
     }
 
-    if (checksum) {
+    if (binaryChecksum) {
       const fileBuffer = await fs.promises.readFile(binaryPath);
       const hashSum = createHash("sha256");
       hashSum.update(fileBuffer);
       const hex = hashSum.digest("hex");
 
-      if (hex !== checksum) {
+      if (hex !== binaryChecksum) {
         throw new Error(
-          `Checksum verification failed. Expected: ${checksum}, Got: ${hex}`,
+          `Checksum verification failed. Expected: ${binaryChecksum}, Got: ${hex}`,
         );
       }
       core.info("Checksum verification passed");
     }
 
-    const versionOutput = execSync(`"${binaryPath}" --version`, {
+    const versionOutput = execFileSync(binaryPath, ["--version"], {
       encoding: "utf8",
     });
     if (!versionOutput) {
