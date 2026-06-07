@@ -31,10 +31,10 @@ vi.mock("./lockfile", () => ({
   resolveVersionFromLockfile: vi.fn(),
 }));
 
-const execSyncMock = vi.fn();
+const execFileSyncMock = vi.fn();
 
 vi.mock("node:child_process", () => ({
-  execSync: execSyncMock,
+  execFileSync: execFileSyncMock,
 }));
 
 describe("setup-tombi action", () => {
@@ -104,7 +104,7 @@ describe("setup-tombi action", () => {
       "0.7.11",
     );
 
-    execSyncMock.mockReturnValue("tombi 0.7.11\n");
+    execFileSyncMock.mockReturnValue("tombi 0.7.11\n");
 
     setInputs();
   });
@@ -124,8 +124,9 @@ describe("setup-tombi action", () => {
         `setup-tombi-v1-linux-x64-${packageJsonVersion}--home-user-.cache-tombi`,
         ["setup-tombi-v1-linux-x64-"],
       );
-      expect(execSyncMock).toHaveBeenCalledWith(
-        `bash "${mockScriptPath}" --version ${packageJsonVersion} --install-dir "/home/user/.local/bin"`,
+      expect(execFileSyncMock).toHaveBeenCalledWith(
+        "bash",
+        [mockScriptPath, "--version", packageJsonVersion, "--install-dir", "/home/user/.local/bin"],
         { stdio: "inherit" },
       );
       expect(core.addPath).toHaveBeenCalledWith("/home/user/.local/bin");
@@ -138,8 +139,9 @@ describe("setup-tombi action", () => {
     it("installs the setup-tombi release version by default", async () => {
       await runAction();
 
-      expect(execSyncMock).toHaveBeenCalledWith(
-        `bash "${mockScriptPath}" --version ${packageJsonVersion} --install-dir "/home/user/.local/bin"`,
+      expect(execFileSyncMock).toHaveBeenCalledWith(
+        "bash",
+        [mockScriptPath, "--version", packageJsonVersion, "--install-dir", "/home/user/.local/bin"],
         { stdio: "inherit" },
       );
     });
@@ -156,8 +158,9 @@ describe("setup-tombi action", () => {
       expect(lockfileModule.resolveVersionFromLockfile).toHaveBeenCalledWith(
         "pnpm-lock.yaml",
       );
-      expect(execSyncMock).toHaveBeenCalledWith(
-        `bash "${mockScriptPath}" --version 0.7.33 --install-dir "/home/user/.local/bin"`,
+      expect(execFileSyncMock).toHaveBeenCalledWith(
+        "bash",
+        [mockScriptPath, "--version", "0.7.33", "--install-dir", "/home/user/.local/bin"],
         { stdio: "inherit" },
       );
     });
@@ -187,8 +190,9 @@ describe("setup-tombi action", () => {
 
       expect(core.warning).toHaveBeenCalledWith("cache backend unavailable");
       expect(core.setOutput).toHaveBeenCalledWith("cache-hit", "false");
-      expect(execSyncMock).toHaveBeenCalledWith(
-        `bash "${mockScriptPath}" --version ${packageJsonVersion} --install-dir "/home/user/.local/bin"`,
+      expect(execFileSyncMock).toHaveBeenCalledWith(
+        "bash",
+        [mockScriptPath, "--version", packageJsonVersion, "--install-dir", "/home/user/.local/bin"],
         { stdio: "inherit" },
       );
       expect(core.setFailed).not.toHaveBeenCalled();
@@ -221,8 +225,9 @@ describe("setup-tombi action", () => {
     it("uses bash to execute install.sh", async () => {
       await runAction();
 
-      expect(execSyncMock).toHaveBeenCalledWith(
-        expect.stringContaining(`bash "${mockScriptPath}"`),
+      expect(execFileSyncMock).toHaveBeenCalledWith(
+        "bash",
+        expect.arrayContaining([mockScriptPath]),
         { stdio: "inherit" },
       );
     });
@@ -257,8 +262,9 @@ describe("setup-tombi action", () => {
       await runAction();
 
       expect(tc.downloadTool).toHaveBeenCalledWith(installScriptUrl);
-      expect(execSyncMock).toHaveBeenCalledWith(
-        `bash "${mockScriptPath}" --version ${packageJsonVersion} --install-dir "/Users/user/.local/bin"`,
+      expect(execFileSyncMock).toHaveBeenCalledWith(
+        "bash",
+        [mockScriptPath, "--version", packageJsonVersion, "--install-dir", "/Users/user/.local/bin"],
         { stdio: "inherit" },
       );
     });
@@ -311,6 +317,27 @@ describe("setup-tombi action", () => {
       expect(core.info).toHaveBeenCalledWith("Checksum verification passed");
     });
 
+    it("normalizes binary checksum values before verification", async () => {
+      const mockFileContent = "mock-file-content";
+      const hash = createHash("sha256");
+      hash.update(mockFileContent);
+      const expectedChecksum = hash.digest("hex").toUpperCase();
+
+      setInputs({
+        "binary-checksum": `  sha256:${expectedChecksum}  `,
+        version: "0.7.0",
+      });
+
+      vi.mocked(fs.promises.readFile).mockResolvedValue(
+        Buffer.from(mockFileContent),
+      );
+
+      await runAction();
+
+      expect(core.info).toHaveBeenCalledWith("Checksum verification passed");
+      expect(core.setFailed).not.toHaveBeenCalled();
+    });
+
     it("prefers binary checksum over checksum when both are provided", async () => {
       const mockFileContent = "mock-file-content";
       const hash = createHash("sha256");
@@ -356,8 +383,9 @@ describe("setup-tombi action", () => {
 
       expect(tc.downloadTool).toHaveBeenCalledTimes(1);
       expect(tc.downloadTool).toHaveBeenCalledWith(installScriptUrl);
-      expect(execSyncMock).toHaveBeenCalledWith(
-        `bash "${mockScriptPath}" --version 1.1.1 --install-dir "/home/user/.local/bin" --checksum "${expectedChecksum}"`,
+      expect(execFileSyncMock).toHaveBeenCalledWith(
+        "bash",
+        [mockScriptPath, "--version", "1.1.1", "--install-dir", "/home/user/.local/bin", "--checksum", expectedChecksum],
         { stdio: "inherit" },
       );
     });
@@ -367,11 +395,47 @@ describe("setup-tombi action", () => {
 
       await runAction();
 
-      expect(execSyncMock).toHaveBeenCalledWith(
-        `bash "${mockScriptPath}" --version 1.1.1 --install-dir "/home/user/.local/bin" --checksum "sha256:1234"`,
+      expect(execFileSyncMock).toHaveBeenCalledWith(
+        "bash",
+        [mockScriptPath, "--version", "1.1.1", "--install-dir", "/home/user/.local/bin", "--checksum", "sha256:1234"],
         { stdio: "inherit" },
       );
       expect(core.setFailed).not.toHaveBeenCalled();
+    });
+
+    it("trims archive checksum before passing it to install.sh", async () => {
+      setInputs({ "archive-checksum": "  sha256:1234  ", version: "1.1.1" });
+
+      await runAction();
+
+      expect(execFileSyncMock).toHaveBeenCalledWith(
+        "bash",
+        [mockScriptPath, "--version", "1.1.1", "--install-dir", "/home/user/.local/bin", "--checksum", "sha256:1234"],
+        { stdio: "inherit" },
+      );
+    });
+
+    it("passes archive checksum as a literal argument", async () => {
+      setInputs({
+        "archive-checksum": 'sha256:$(echo injected)`uname`',
+        version: "1.1.1",
+      });
+
+      await runAction();
+
+      expect(execFileSyncMock).toHaveBeenCalledWith(
+        "bash",
+        [
+          mockScriptPath,
+          "--version",
+          "1.1.1",
+          "--install-dir",
+          "/home/user/.local/bin",
+          "--checksum",
+          "sha256:$(echo injected)`uname`",
+        ],
+        { stdio: "inherit" },
+      );
     });
   });
 

@@ -41357,6 +41357,18 @@ function getDefaultTombiVersion() {
     }
     return packageJson.version.trim();
 }
+function getOptionalTrimmedInput(name) {
+    const value = core.getInput(name).trim();
+    return value || undefined;
+}
+function normalizeBinaryChecksumInput() {
+    const checksum = getOptionalTrimmedInput("binary-checksum") ??
+        getOptionalTrimmedInput("checksum");
+    if (!checksum) {
+        return undefined;
+    }
+    return checksum.replace(/^sha256:/i, "").toLowerCase();
+}
 async function resolveRequestedVersion(versionInput, lockfileInput) {
     if (versionInput && lockfileInput) {
         throw new Error("Inputs `version` and `lockfile` are mutually exclusive.");
@@ -41375,10 +41387,8 @@ async function run() {
     try {
         const versionInput = core.getInput("version").trim();
         const lockfileInput = core.getInput("lockfile").trim();
-        const checksum = core.getInput("binary-checksum") ||
-            core.getInput("checksum") ||
-            undefined;
-        const archiveChecksum = core.getInput("archive-checksum") || undefined;
+        const binaryChecksum = normalizeBinaryChecksumInput();
+        const archiveChecksum = getOptionalTrimmedInput("archive-checksum");
         const enableCacheInput = core.getInput("enable-cache");
         const version = await resolveRequestedVersion(versionInput, lockfileInput);
         const cacheMode = (0, cache_1.parseCacheMode)(enableCacheInput);
@@ -41397,31 +41407,30 @@ async function run() {
         core.info("Downloading Tombi install script...");
         const scriptPath = await tc.downloadTool(installScriptUrl);
         // Build arguments
-        const args = [`--version ${version}`, `--install-dir "${installDir}"`];
+        const args = ["--version", version, "--install-dir", installDir];
         if (archiveChecksum) {
-            args.push(`--checksum "${archiveChecksum}"`);
+            args.push("--checksum", archiveChecksum);
         }
         // Execute the install script using bash
         core.info(`Installing Tombi version ${version}...`);
-        const command = `bash "${scriptPath}" ${args.join(" ")}`.trim();
-        core.info(`Execute: ${command}`);
-        (0, node_child_process_1.execSync)(command, { stdio: "inherit" });
+        core.info(`Execute: bash "${scriptPath}" ${args.join(" ")}`);
+        (0, node_child_process_1.execFileSync)("bash", [scriptPath, ...args], { stdio: "inherit" });
         const binaryPath = path.join(installDir, getBinaryName());
         // Verify binary exists
         if (!fs.existsSync(binaryPath)) {
             throw new Error(`Binary not found at ${binaryPath}`);
         }
-        if (checksum) {
+        if (binaryChecksum) {
             const fileBuffer = await fs.promises.readFile(binaryPath);
             const hashSum = (0, node_crypto_1.createHash)("sha256");
             hashSum.update(fileBuffer);
             const hex = hashSum.digest("hex");
-            if (hex !== checksum) {
-                throw new Error(`Checksum verification failed. Expected: ${checksum}, Got: ${hex}`);
+            if (hex !== binaryChecksum) {
+                throw new Error(`Checksum verification failed. Expected: ${binaryChecksum}, Got: ${hex}`);
             }
             core.info("Checksum verification passed");
         }
-        const versionOutput = (0, node_child_process_1.execSync)(`"${binaryPath}" --version`, {
+        const versionOutput = (0, node_child_process_1.execFileSync)(binaryPath, ["--version"], {
             encoding: "utf8",
         });
         if (!versionOutput) {
