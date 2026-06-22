@@ -40,7 +40,12 @@ def parse_args() -> argparse.Namespace:
 
 
 def normalize_version(version: str) -> str:
-    return version.removeprefix("v").strip()
+    normalized_version = version.removeprefix("v").strip()
+    if not re.fullmatch(r"\d+\.\d+\.\d+", normalized_version):
+        raise RuntimeError(
+            "Version must be a semantic version in MAJOR.MINOR.PATCH format"
+        )
+    return normalized_version
 
 
 def read_package_version() -> str:
@@ -60,8 +65,10 @@ def find_binary_in_tar_gz(archive_content: bytes, binary_name: str) -> bytes:
 
             binary_file = archive.extractfile(member)
             if binary_file is None:
-                break
-            return binary_file.read()
+                continue
+
+            with binary_file:
+                return binary_file.read()
 
     raise RuntimeError(f"Could not find {binary_name} in release archive")
 
@@ -165,6 +172,39 @@ def update_package_json(new_version: str) -> bool:
 
     package_json_path.write_text(updated_content)
     return True
+
+
+def readme_needs_update(new_version: str) -> bool:
+    readme_path = REPO_ROOT / "README.md"
+    readme_content = readme_path.read_text()
+
+    if re.search(
+        r"uses: tombi-toml/setup-tombi@v(?!"
+        + re.escape(new_version)
+        + r"\b)\d+\.\d+\.\d+",
+        readme_content,
+    ):
+        return True
+
+    stale_patterns = (
+        r"archive-checksum: '<sha256-checksum>'",
+        r"binary-checksum: '<sha256-checksum>'",
+        r"(?m)^    version: '[^']+'\n    archive-checksum:",
+        r"(?m)^    version: '[^']+'\n    binary-checksum:",
+        r"<summary>Checksums for all supported targets</summary>",
+        r"<summary>Archive checksums for all supported targets</summary>",
+        r"<summary>Executable binary checksums for all supported targets</summary>",
+    )
+    if any(re.search(pattern, readme_content) for pattern in stale_patterns):
+        return True
+
+    required_patterns = (
+        r"<summary>🔐 Archive checksums for all supported targets</summary>",
+        r"<summary>🔐 Executable binary checksums for all supported targets</summary>",
+        r"archive-checksum: '[0-9a-f]{64}'",
+        r"binary-checksum: '[0-9a-f]{64}'",
+    )
+    return not all(re.search(pattern, readme_content) for pattern in required_patterns)
 
 
 def update_readme(new_version: str, checksums: list[ReleaseChecksums]) -> bool:
@@ -293,6 +333,12 @@ def main():
     current_package_version = read_package_version()
     print(f"Current package version: {current_package_version}")
     print(f"Target version: {target_version}")
+
+    package_needs_update = current_package_version != target_version
+    readme_requires_update = readme_needs_update(target_version)
+    if not package_needs_update and not readme_requires_update:
+        print("Versions are already up to date")
+        return
 
     checksums = fetch_release_checksums(target_version)
     package_updated = update_package_json(target_version)

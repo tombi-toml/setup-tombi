@@ -9,6 +9,16 @@ import update_version
 
 
 class UpdateVersionTest(unittest.TestCase):
+    def test_normalize_version_rejects_invalid_versions(self):
+        with self.assertRaisesRegex(RuntimeError, "MAJOR.MINOR.PATCH"):
+            update_version.normalize_version("1.2")
+
+        with self.assertRaisesRegex(RuntimeError, "MAJOR.MINOR.PATCH"):
+            update_version.normalize_version("1.2.3-dev")
+
+    def test_normalize_version_accepts_versions_with_v_prefix(self):
+        self.assertEqual(update_version.normalize_version("v1.2.3"), "1.2.3")
+
     def test_find_binary_in_tar_gz(self):
         archive_buffer = io.BytesIO()
         with tarfile.open(fileobj=archive_buffer, mode="w:gz") as archive:
@@ -122,6 +132,76 @@ For the executable binary
 </details>
 """,
                 )
+            finally:
+                update_version.REPO_ROOT = original_repo_root
+
+    def test_readme_needs_update_returns_false_for_current_generated_form(self):
+        with tempfile.TemporaryDirectory() as directory:
+            original_repo_root = update_version.REPO_ROOT
+            try:
+                update_version.REPO_ROOT = Path(directory)
+                readme_path = update_version.REPO_ROOT / "README.md"
+                readme_path.write_text(
+                    """# setup-tombi
+
+```yaml
+- uses: tombi-toml/setup-tombi@v1.2.3
+  with:
+    archive-checksum: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+```
+
+<details>
+<summary>🔐 Archive checksums for all supported targets</summary>
+
+| Target | Archive checksum |
+|--------|----------|
+| `x86_64-unknown-linux-musl` | `aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa` |
+
+</details>
+
+```yaml
+- uses: tombi-toml/setup-tombi@v1.2.3
+  with:
+    binary-checksum: 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
+```
+
+<details>
+<summary>🔐 Executable binary checksums for all supported targets</summary>
+
+| Target | Binary checksum |
+|--------|----------|
+| `x86_64-unknown-linux-musl` | `bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb` |
+
+</details>
+"""
+                )
+
+                self.assertFalse(update_version.readme_needs_update("1.2.3"))
+            finally:
+                update_version.REPO_ROOT = original_repo_root
+
+    def test_readme_needs_update_returns_true_for_legacy_details(self):
+        with tempfile.TemporaryDirectory() as directory:
+            original_repo_root = update_version.REPO_ROOT
+            try:
+                update_version.REPO_ROOT = Path(directory)
+                readme_path = update_version.REPO_ROOT / "README.md"
+                readme_path.write_text(
+                    """# setup-tombi
+
+```yaml
+- uses: tombi-toml/setup-tombi@v1.2.3
+  with:
+    archive-checksum: '<sha256-checksum>'
+```
+
+<details>
+<summary>Checksums for all supported targets</summary>
+</details>
+"""
+                )
+
+                self.assertTrue(update_version.readme_needs_update("1.2.3"))
             finally:
                 update_version.REPO_ROOT = original_repo_root
 
