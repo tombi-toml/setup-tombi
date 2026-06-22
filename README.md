@@ -30,13 +30,14 @@ This is the recommended form from `setup-tombi@v1.1.0` onward. When `with.versio
 
 ### Install with checksum verification
 
+The checksum examples below are for GitHub-hosted Linux x64 runners (`x86_64-unknown-linux-musl`).
+
 For the archive
 
 ```yaml
 - uses: tombi-toml/setup-tombi@v1.1.4
   with:
-    version: '1.0.0'
-    archive-checksum: '<sha256-checksum>'
+    archive-checksum: '65586fb53f36b989636d2e83e27316d788056835cc7f8e6e38ba445fb17d9b43'
 ```
 
 For the executable binary
@@ -44,8 +45,7 @@ For the executable binary
 ```yaml
 - uses: tombi-toml/setup-tombi@v1.1.4
   with:
-    version: '1.0.0'
-    binary-checksum: '<sha256-checksum>'
+    binary-checksum: '80f66f194d2950f791cfcc84707ac82c7aa623dab4cf836d69ac1982453e3d84'
 ```
 
 ### Cache behavior
