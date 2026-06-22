@@ -41,7 +41,7 @@ For the archive
 ```
 
 <details>
-<summary>Archive checksums for all supported targets</summary>
+<summary>🔐 Archive checksums for all supported targets</summary>
 
 | Target | Archive checksum |
 |--------|----------|
@@ -64,7 +64,7 @@ For the executable binary
 ```
 
 <details>
-<summary>Executable binary checksums for all supported targets</summary>
+<summary>🔐 Executable binary checksums for all supported targets</summary>
 
 | Target | Binary checksum |
 |--------|----------|
@@ -77,7 +77,6 @@ For the executable binary
 | `x86_64-unknown-linux-musl` | `80f66f194d2950f791cfcc84707ac82c7aa623dab4cf836d69ac1982453e3d84` |
 
 </details>
-
 
 ### Cache behavior
 - `true`: always enables cache.

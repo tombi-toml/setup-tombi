@@ -207,13 +207,13 @@ def update_readme(new_version: str, checksums: list[ReleaseChecksums]) -> bool:
 
     archive_details = (
         "<details>\n"
-        "<summary>Archive checksums for all supported targets</summary>\n\n"
+        "<summary>🔐 Archive checksums for all supported targets</summary>\n\n"
         f"{render_checksum_table(checksums, 'archive', 'Archive checksum')}\n\n"
         "</details>\n"
     )
     binary_details = (
         "<details>\n"
-        "<summary>Executable binary checksums for all supported targets</summary>\n\n"
+        "<summary>🔐 Executable binary checksums for all supported targets</summary>\n\n"
         f"{render_checksum_table(checksums, 'binary', 'Binary checksum')}\n\n"
         "</details>\n"
     )
@@ -222,7 +222,7 @@ def update_readme(new_version: str, checksums: list[ReleaseChecksums]) -> bool:
         r"\n<details>\n"
         r"<summary>Checksums for all supported targets</summary>\n\n"
         r"(?s:.*?)\n"
-        r"</details>\n?"
+        r"</details>\n*"
     )
     updated_content = re.sub(
         legacy_details_pattern,
@@ -232,17 +232,17 @@ def update_readme(new_version: str, checksums: list[ReleaseChecksums]) -> bool:
 
     archive_details_pattern = (
         r"(?s)\n<details>\n"
-        r"<summary>Archive checksums for all supported targets</summary>\n\n"
+        r"<summary>(?:🔐 )?Archive checksums for all supported targets</summary>\n\n"
         r".*?\n"
-        r"</details>\n?"
+        r"</details>\n*"
     )
     updated_content = re.sub(archive_details_pattern, "\n", updated_content)
 
     binary_details_pattern = (
         r"(?s)\n<details>\n"
-        r"<summary>Executable binary checksums for all supported targets</summary>\n\n"
+        r"<summary>(?:🔐 )?Executable binary checksums for all supported targets</summary>\n\n"
         r".*?\n"
-        r"</details>\n?"
+        r"</details>\n*"
     )
     updated_content = re.sub(binary_details_pattern, "\n", updated_content)
 

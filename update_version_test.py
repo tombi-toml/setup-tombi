@@ -94,7 +94,7 @@ For the archive
 ```
 
 <details>
-<summary>Archive checksums for all supported targets</summary>
+<summary>🔐 Archive checksums for all supported targets</summary>
 
 | Target | Archive checksum |
 |--------|----------|
@@ -112,7 +112,7 @@ For the executable binary
 ```
 
 <details>
-<summary>Executable binary checksums for all supported targets</summary>
+<summary>🔐 Executable binary checksums for all supported targets</summary>
 
 | Target | Binary checksum |
 |--------|----------|
