@@ -131,15 +131,18 @@ def default_release_checksums(checksums: list[ReleaseChecksums]) -> ReleaseCheck
     raise RuntimeError(f"Could not find checksums for {DEFAULT_CHECKSUM_TARGET}")
 
 
-def render_checksum_table(checksums: list[ReleaseChecksums]) -> str:
+def render_checksum_table(
+    checksums: list[ReleaseChecksums],
+    checksum_field: str,
+    checksum_label: str,
+) -> str:
     rows = [
-        "| Target | Archive checksum | Binary checksum |",
-        "|--------|------------------|-----------------|",
+        f"| Target | {checksum_label} |",
+        "|--------|----------|",
     ]
-    rows.extend(
-        f"| `{checksum.target}` | `{checksum.archive}` | `{checksum.binary}` |"
-        for checksum in checksums
-    )
+    for checksum in checksums:
+        value = getattr(checksum, checksum_field)
+        rows.append(f"| `{checksum.target}` | `{value}` |")
     return "\n".join(rows)
 
 
@@ -202,40 +205,80 @@ def update_readme(new_version: str, checksums: list[ReleaseChecksums]) -> bool:
     if binary_replacements != 1:
         raise RuntimeError("Could not update binary-checksum example in README.md")
 
-    checksum_table = render_checksum_table(checksums)
-    checksum_details = (
+    archive_details = (
         "<details>\n"
-        "<summary>Checksums for all supported targets</summary>\n\n"
-        f"{checksum_table}\n\n"
+        "<summary>Archive checksums for all supported targets</summary>\n\n"
+        f"{render_checksum_table(checksums, 'archive', 'Archive checksum')}\n\n"
         "</details>\n"
     )
-    details_pattern = (
-        r"(?s)<details>\n"
-        r"<summary>Checksums for all supported targets</summary>\n\n"
-        r".*?\n"
-        r"</details>"
+    binary_details = (
+        "<details>\n"
+        "<summary>Executable binary checksums for all supported targets</summary>\n\n"
+        f"{render_checksum_table(checksums, 'binary', 'Binary checksum')}\n\n"
+        "</details>\n"
     )
-    updated_content, details_replacements = re.subn(
-        details_pattern,
-        checksum_details,
+
+    legacy_details_pattern = (
+        r"\n<details>\n"
+        r"<summary>Checksums for all supported targets</summary>\n\n"
+        r"(?s:.*?)\n"
+        r"</details>\n?"
+    )
+    updated_content = re.sub(
+        legacy_details_pattern,
+        "\n",
         updated_content,
     )
-    if details_replacements == 0:
-        insert_after = (
-            r"(?s)(```yaml\n"
-            r"- uses: tombi-toml/setup-tombi@v\d+\.\d+\.\d+\n"
-            r"  with:\n"
-            r"    binary-checksum: '[^']+'\n"
-            r"```\n)"
-        )
-        updated_content, details_replacements = re.subn(
-            insert_after,
-            rf"\1\n{checksum_details}",
-            updated_content,
-            count=1,
-        )
-    if details_replacements != 1:
-        raise RuntimeError("Could not update checksum details in README.md")
+
+    archive_details_pattern = (
+        r"(?s)\n<details>\n"
+        r"<summary>Archive checksums for all supported targets</summary>\n\n"
+        r".*?\n"
+        r"</details>\n?"
+    )
+    updated_content = re.sub(archive_details_pattern, "\n", updated_content)
+
+    binary_details_pattern = (
+        r"(?s)\n<details>\n"
+        r"<summary>Executable binary checksums for all supported targets</summary>\n\n"
+        r".*?\n"
+        r"</details>\n?"
+    )
+    updated_content = re.sub(binary_details_pattern, "\n", updated_content)
+
+    archive_insert_after = (
+        r"(?s)(For the archive\n\n"
+        r"```yaml\n"
+        r"- uses: tombi-toml/setup-tombi@v\d+\.\d+\.\d+\n"
+        r"  with:\n"
+        r"    archive-checksum: '[^']+'\n"
+        r"```\n)"
+    )
+    updated_content, archive_details_replacements = re.subn(
+        archive_insert_after,
+        rf"\1\n{archive_details}",
+        updated_content,
+        count=1,
+    )
+    if archive_details_replacements != 1:
+        raise RuntimeError("Could not update archive checksum details in README.md")
+
+    binary_insert_after = (
+        r"(?s)(For the executable binary\n\n"
+        r"```yaml\n"
+        r"- uses: tombi-toml/setup-tombi@v\d+\.\d+\.\d+\n"
+        r"  with:\n"
+        r"    binary-checksum: '[^']+'\n"
+        r"```\n)"
+    )
+    updated_content, binary_details_replacements = re.subn(
+        binary_insert_after,
+        rf"\1\n{binary_details}",
+        updated_content,
+        count=1,
+    )
+    if binary_details_replacements != 1:
+        raise RuntimeError("Could not update binary checksum details in README.md")
 
     if updated_content == readme_content:
         return False

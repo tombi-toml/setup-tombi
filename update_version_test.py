@@ -44,12 +44,16 @@ class UpdateVersionTest(unittest.TestCase):
                 readme_path.write_text(
                     """# setup-tombi
 
+For the archive
+
 ```yaml
 - uses: tombi-toml/setup-tombi@v1.1.4
   with:
     version: '1.0.0'
     archive-checksum: '<sha256-checksum>'
 ```
+
+For the executable binary
 
 ```yaml
 - uses: tombi-toml/setup-tombi@v1.1.4
@@ -81,11 +85,25 @@ class UpdateVersionTest(unittest.TestCase):
                     readme_path.read_text(),
                     """# setup-tombi
 
+For the archive
+
 ```yaml
 - uses: tombi-toml/setup-tombi@v1.2.3
   with:
     archive-checksum: 'archive-sha'
 ```
+
+<details>
+<summary>Archive checksums for all supported targets</summary>
+
+| Target | Archive checksum |
+|--------|----------|
+| `aarch64-apple-darwin` | `darwin-arm64-archive-sha` |
+| `x86_64-unknown-linux-musl` | `archive-sha` |
+
+</details>
+
+For the executable binary
 
 ```yaml
 - uses: tombi-toml/setup-tombi@v1.2.3
@@ -94,12 +112,12 @@ class UpdateVersionTest(unittest.TestCase):
 ```
 
 <details>
-<summary>Checksums for all supported targets</summary>
+<summary>Executable binary checksums for all supported targets</summary>
 
-| Target | Archive checksum | Binary checksum |
-|--------|------------------|-----------------|
-| `aarch64-apple-darwin` | `darwin-arm64-archive-sha` | `darwin-arm64-binary-sha` |
-| `x86_64-unknown-linux-musl` | `archive-sha` | `binary-sha` |
+| Target | Binary checksum |
+|--------|----------|
+| `aarch64-apple-darwin` | `darwin-arm64-binary-sha` |
+| `x86_64-unknown-linux-musl` | `binary-sha` |
 
 </details>
 """,
@@ -116,11 +134,15 @@ class UpdateVersionTest(unittest.TestCase):
                 readme_path.write_text(
                     """# setup-tombi
 
+For the archive
+
 ```yaml
 - uses: tombi-toml/setup-tombi@v1.2.3
   with:
     archive-checksum: 'old-archive-sha'
 ```
+
+For the executable binary
 
 ```yaml
 - uses: tombi-toml/setup-tombi@v1.2.3
@@ -165,7 +187,11 @@ class UpdateVersionTest(unittest.TestCase):
                     readme_path.read_text(),
                 )
                 self.assertIn(
-                    "| `aarch64-pc-windows-msvc` | `windows-arm64-archive-sha` | `windows-arm64-binary-sha` |",
+                    "| `aarch64-pc-windows-msvc` | `windows-arm64-archive-sha` |",
+                    readme_path.read_text(),
+                )
+                self.assertIn(
+                    "| `aarch64-pc-windows-msvc` | `windows-arm64-binary-sha` |",
                     readme_path.read_text(),
                 )
                 self.assertNotIn("version:", readme_path.read_text())
