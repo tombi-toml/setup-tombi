@@ -2,6 +2,7 @@ import io
 import tarfile
 import tempfile
 import unittest
+import zipfile
 from pathlib import Path
 
 import update_version
@@ -17,8 +18,21 @@ class UpdateVersionTest(unittest.TestCase):
             archive.addfile(member, io.BytesIO(binary_content))
 
         self.assertEqual(
-            update_version.find_binary_in_tar_gz(archive_buffer.getvalue()),
+            update_version.find_binary_in_tar_gz(archive_buffer.getvalue(), "tombi"),
             binary_content,
+        )
+
+    def test_find_binary_in_zip(self):
+        archive_buffer = io.BytesIO()
+        with zipfile.ZipFile(archive_buffer, mode="w") as archive:
+            archive.writestr(
+                "tombi-cli-1.2.3-x86_64-pc-windows-msvc/tombi.exe",
+                b"windows binary content",
+            )
+
+        self.assertEqual(
+            update_version.find_binary_in_zip(archive_buffer.getvalue(), "tombi.exe"),
+            b"windows binary content",
         )
 
     def test_update_readme_replaces_versions_and_checksum_placeholders(self):
@@ -48,10 +62,18 @@ class UpdateVersionTest(unittest.TestCase):
 
                 updated = update_version.update_readme(
                     "1.2.3",
-                    update_version.ReleaseChecksums(
-                        archive="archive-sha",
-                        binary="binary-sha",
-                    ),
+                    [
+                        update_version.ReleaseChecksums(
+                            target="aarch64-apple-darwin",
+                            archive="darwin-arm64-archive-sha",
+                            binary="darwin-arm64-binary-sha",
+                        ),
+                        update_version.ReleaseChecksums(
+                            target="x86_64-unknown-linux-musl",
+                            archive="archive-sha",
+                            binary="binary-sha",
+                        ),
+                    ],
                 )
 
                 self.assertTrue(updated)
@@ -70,6 +92,16 @@ class UpdateVersionTest(unittest.TestCase):
   with:
     binary-checksum: 'binary-sha'
 ```
+
+<details>
+<summary>Checksums for all supported targets</summary>
+
+| Target | Archive checksum | Binary checksum |
+|--------|------------------|-----------------|
+| `aarch64-apple-darwin` | `darwin-arm64-archive-sha` | `darwin-arm64-binary-sha` |
+| `x86_64-unknown-linux-musl` | `archive-sha` | `binary-sha` |
+
+</details>
 """,
                 )
             finally:
@@ -95,15 +127,32 @@ class UpdateVersionTest(unittest.TestCase):
   with:
     binary-checksum: 'old-binary-sha'
 ```
+
+<details>
+<summary>Checksums for all supported targets</summary>
+
+| Target | Archive checksum | Binary checksum |
+|--------|------------------|-----------------|
+| `x86_64-unknown-linux-musl` | `old-archive-sha` | `old-binary-sha` |
+
+</details>
 """
                 )
 
                 updated = update_version.update_readme(
                     "1.2.4",
-                    update_version.ReleaseChecksums(
-                        archive="new-archive-sha",
-                        binary="new-binary-sha",
-                    ),
+                    [
+                        update_version.ReleaseChecksums(
+                            target="aarch64-pc-windows-msvc",
+                            archive="windows-arm64-archive-sha",
+                            binary="windows-arm64-binary-sha",
+                        ),
+                        update_version.ReleaseChecksums(
+                            target="x86_64-unknown-linux-musl",
+                            archive="new-archive-sha",
+                            binary="new-binary-sha",
+                        ),
+                    ],
                 )
 
                 self.assertTrue(updated)
@@ -113,6 +162,10 @@ class UpdateVersionTest(unittest.TestCase):
                 )
                 self.assertIn(
                     "binary-checksum: 'new-binary-sha'",
+                    readme_path.read_text(),
+                )
+                self.assertIn(
+                    "| `aarch64-pc-windows-msvc` | `windows-arm64-archive-sha` | `windows-arm64-binary-sha` |",
                     readme_path.read_text(),
                 )
                 self.assertNotIn("version:", readme_path.read_text())

@@ -5,15 +5,26 @@ import io
 import re
 import tarfile
 import urllib.request
+import zipfile
 from dataclasses import dataclass
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).parent
-CHECKSUM_TARGET = "x86_64-unknown-linux-musl"
+DEFAULT_CHECKSUM_TARGET = "x86_64-unknown-linux-musl"
+CHECKSUM_TARGETS = (
+    ("aarch64-apple-darwin", "tar.gz", "tombi"),
+    ("aarch64-pc-windows-msvc", "zip", "tombi.exe"),
+    ("aarch64-unknown-linux-musl", "tar.gz", "tombi"),
+    ("arm-unknown-linux-gnueabihf", "tar.gz", "tombi"),
+    ("x86_64-apple-darwin", "tar.gz", "tombi"),
+    ("x86_64-pc-windows-msvc", "zip", "tombi.exe"),
+    ("x86_64-unknown-linux-musl", "tar.gz", "tombi"),
+)
 
 
 @dataclass(frozen=True)
 class ReleaseChecksums:
+    target: str
     archive: str
     binary: str
 
@@ -41,10 +52,10 @@ def sha256_hex(content: bytes) -> str:
     return hashlib.sha256(content).hexdigest()
 
 
-def find_binary_in_tar_gz(archive_content: bytes) -> bytes:
+def find_binary_in_tar_gz(archive_content: bytes, binary_name: str) -> bytes:
     with tarfile.open(fileobj=io.BytesIO(archive_content), mode="r:gz") as archive:
         for member in archive.getmembers():
-            if not member.isfile() or Path(member.name).name != "tombi":
+            if not member.isfile() or Path(member.name).name != binary_name:
                 continue
 
             binary_file = archive.extractfile(member)
@@ -52,11 +63,39 @@ def find_binary_in_tar_gz(archive_content: bytes) -> bytes:
                 break
             return binary_file.read()
 
-    raise RuntimeError("Could not find tombi binary in release archive")
+    raise RuntimeError(f"Could not find {binary_name} in release archive")
 
 
-def fetch_release_checksums(version: str) -> ReleaseChecksums:
-    archive_name = f"tombi-cli-{version}-{CHECKSUM_TARGET}.tar.gz"
+def find_binary_in_zip(archive_content: bytes, binary_name: str) -> bytes:
+    with zipfile.ZipFile(io.BytesIO(archive_content)) as archive:
+        for member_name in archive.namelist():
+            if Path(member_name).name != binary_name:
+                continue
+            return archive.read(member_name)
+
+    raise RuntimeError(f"Could not find {binary_name} in release archive")
+
+
+def find_binary_in_archive(
+    archive_content: bytes,
+    archive_format: str,
+    binary_name: str,
+) -> bytes:
+    if archive_format == "tar.gz":
+        return find_binary_in_tar_gz(archive_content, binary_name)
+    if archive_format == "zip":
+        return find_binary_in_zip(archive_content, binary_name)
+
+    raise RuntimeError(f"Unsupported archive format: {archive_format}")
+
+
+def fetch_release_checksums_for_target(
+    version: str,
+    target: str,
+    archive_format: str,
+    binary_name: str,
+) -> ReleaseChecksums:
+    archive_name = f"tombi-cli-{version}-{target}.{archive_format}"
     archive_url = (
         f"https://github.com/tombi-toml/tombi/releases/download/v{version}/{archive_name}"
     )
@@ -65,11 +104,43 @@ def fetch_release_checksums(version: str) -> ReleaseChecksums:
     with urllib.request.urlopen(archive_url, timeout=60) as response:
         archive_content = response.read()
 
-    binary_content = find_binary_in_tar_gz(archive_content)
+    binary_content = find_binary_in_archive(
+        archive_content,
+        archive_format,
+        binary_name,
+    )
     return ReleaseChecksums(
+        target=target,
         archive=sha256_hex(archive_content),
         binary=sha256_hex(binary_content),
     )
+
+
+def fetch_release_checksums(version: str) -> list[ReleaseChecksums]:
+    return [
+        fetch_release_checksums_for_target(version, target, archive_format, binary_name)
+        for target, archive_format, binary_name in CHECKSUM_TARGETS
+    ]
+
+
+def default_release_checksums(checksums: list[ReleaseChecksums]) -> ReleaseChecksums:
+    for checksum in checksums:
+        if checksum.target == DEFAULT_CHECKSUM_TARGET:
+            return checksum
+
+    raise RuntimeError(f"Could not find checksums for {DEFAULT_CHECKSUM_TARGET}")
+
+
+def render_checksum_table(checksums: list[ReleaseChecksums]) -> str:
+    rows = [
+        "| Target | Archive checksum | Binary checksum |",
+        "|--------|------------------|-----------------|",
+    ]
+    rows.extend(
+        f"| `{checksum.target}` | `{checksum.archive}` | `{checksum.binary}` |"
+        for checksum in checksums
+    )
+    return "\n".join(rows)
 
 
 def update_package_json(new_version: str) -> bool:
@@ -93,9 +164,10 @@ def update_package_json(new_version: str) -> bool:
     return True
 
 
-def update_readme(new_version: str, checksums: ReleaseChecksums) -> bool:
+def update_readme(new_version: str, checksums: list[ReleaseChecksums]) -> bool:
     readme_path = REPO_ROOT / "README.md"
     readme_content = readme_path.read_text()
+    default_checksums = default_release_checksums(checksums)
 
     version_match = re.search(
         r"uses: tombi-toml/setup-tombi@v(\d+\.\d+\.\d+)", readme_content
@@ -116,7 +188,7 @@ def update_readme(new_version: str, checksums: ReleaseChecksums) -> bool:
 
     updated_content, archive_replacements = re.subn(
         r"(?m)^(?:    version: '[^']+'\n)?    archive-checksum: '[^']+'$",
-        f"    archive-checksum: '{checksums.archive}'",
+        f"    archive-checksum: '{default_checksums.archive}'",
         updated_content,
     )
     if archive_replacements != 1:
@@ -124,11 +196,46 @@ def update_readme(new_version: str, checksums: ReleaseChecksums) -> bool:
 
     updated_content, binary_replacements = re.subn(
         r"(?m)^(?:    version: '[^']+'\n)?    binary-checksum: '[^']+'$",
-        f"    binary-checksum: '{checksums.binary}'",
+        f"    binary-checksum: '{default_checksums.binary}'",
         updated_content,
     )
     if binary_replacements != 1:
         raise RuntimeError("Could not update binary-checksum example in README.md")
+
+    checksum_table = render_checksum_table(checksums)
+    checksum_details = (
+        "<details>\n"
+        "<summary>Checksums for all supported targets</summary>\n\n"
+        f"{checksum_table}\n\n"
+        "</details>\n"
+    )
+    details_pattern = (
+        r"(?s)<details>\n"
+        r"<summary>Checksums for all supported targets</summary>\n\n"
+        r".*?\n"
+        r"</details>"
+    )
+    updated_content, details_replacements = re.subn(
+        details_pattern,
+        checksum_details,
+        updated_content,
+    )
+    if details_replacements == 0:
+        insert_after = (
+            r"(?s)(```yaml\n"
+            r"- uses: tombi-toml/setup-tombi@v\d+\.\d+\.\d+\n"
+            r"  with:\n"
+            r"    binary-checksum: '[^']+'\n"
+            r"```\n)"
+        )
+        updated_content, details_replacements = re.subn(
+            insert_after,
+            rf"\1\n{checksum_details}",
+            updated_content,
+            count=1,
+        )
+    if details_replacements != 1:
+        raise RuntimeError("Could not update checksum details in README.md")
 
     if updated_content == readme_content:
         return False
