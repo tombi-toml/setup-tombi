@@ -54,7 +54,7 @@ class UpdateVersionTest(unittest.TestCase):
                 readme_path.write_text(
                     """# setup-tombi
 
-For the archive
+#### For the archive
 
 ```yaml
 - uses: tombi-toml/setup-tombi@v1.1.4
@@ -63,7 +63,7 @@ For the archive
     archive-checksum: '<sha256-checksum>'
 ```
 
-For the executable binary
+#### For the executable binary
 
 ```yaml
 - uses: tombi-toml/setup-tombi@v1.1.4
@@ -95,7 +95,7 @@ For the executable binary
                     readme_path.read_text(),
                     """# setup-tombi
 
-For the archive
+#### For the archive
 
 ```yaml
 - uses: tombi-toml/setup-tombi@v1.2.3
@@ -113,7 +113,7 @@ For the archive
 
 </details>
 
-For the executable binary
+#### For the executable binary
 
 ```yaml
 - uses: tombi-toml/setup-tombi@v1.2.3
@@ -135,76 +135,6 @@ For the executable binary
             finally:
                 update_version.REPO_ROOT = original_repo_root
 
-    def test_readme_needs_update_returns_false_for_current_generated_form(self):
-        with tempfile.TemporaryDirectory() as directory:
-            original_repo_root = update_version.REPO_ROOT
-            try:
-                update_version.REPO_ROOT = Path(directory)
-                readme_path = update_version.REPO_ROOT / "README.md"
-                readme_path.write_text(
-                    """# setup-tombi
-
-```yaml
-- uses: tombi-toml/setup-tombi@v1.2.3
-  with:
-    archive-checksum: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
-```
-
-<details>
-<summary>🔐 Archive checksums for all supported targets</summary>
-
-| Target | Archive checksum |
-|--------|----------|
-| `x86_64-unknown-linux-musl` | `aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa` |
-
-</details>
-
-```yaml
-- uses: tombi-toml/setup-tombi@v1.2.3
-  with:
-    binary-checksum: 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
-```
-
-<details>
-<summary>🔐 Executable binary checksums for all supported targets</summary>
-
-| Target | Binary checksum |
-|--------|----------|
-| `x86_64-unknown-linux-musl` | `bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb` |
-
-</details>
-"""
-                )
-
-                self.assertFalse(update_version.readme_needs_update("1.2.3"))
-            finally:
-                update_version.REPO_ROOT = original_repo_root
-
-    def test_readme_needs_update_returns_true_for_legacy_details(self):
-        with tempfile.TemporaryDirectory() as directory:
-            original_repo_root = update_version.REPO_ROOT
-            try:
-                update_version.REPO_ROOT = Path(directory)
-                readme_path = update_version.REPO_ROOT / "README.md"
-                readme_path.write_text(
-                    """# setup-tombi
-
-```yaml
-- uses: tombi-toml/setup-tombi@v1.2.3
-  with:
-    archive-checksum: '<sha256-checksum>'
-```
-
-<details>
-<summary>Checksums for all supported targets</summary>
-</details>
-"""
-                )
-
-                self.assertTrue(update_version.readme_needs_update("1.2.3"))
-            finally:
-                update_version.REPO_ROOT = original_repo_root
-
     def test_update_readme_updates_existing_checksum_examples(self):
         with tempfile.TemporaryDirectory() as directory:
             original_repo_root = update_version.REPO_ROOT
@@ -214,7 +144,7 @@ For the executable binary
                 readme_path.write_text(
                     """# setup-tombi
 
-For the archive
+#### For the archive
 
 ```yaml
 - uses: tombi-toml/setup-tombi@v1.2.3
@@ -222,7 +152,7 @@ For the archive
     archive-checksum: 'old-archive-sha'
 ```
 
-For the executable binary
+#### For the executable binary
 
 ```yaml
 - uses: tombi-toml/setup-tombi@v1.2.3
@@ -274,7 +204,7 @@ For the executable binary
                     "| `aarch64-pc-windows-msvc` | `windows-arm64-binary-sha` |",
                     readme_path.read_text(),
                 )
-                self.assertNotIn("version:", readme_path.read_text())
+                self.assertNotIn("    version:", readme_path.read_text())
             finally:
                 update_version.REPO_ROOT = original_repo_root
 

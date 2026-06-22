@@ -174,39 +174,6 @@ def update_package_json(new_version: str) -> bool:
     return True
 
 
-def readme_needs_update(new_version: str) -> bool:
-    readme_path = REPO_ROOT / "README.md"
-    readme_content = readme_path.read_text()
-
-    if re.search(
-        r"uses: tombi-toml/setup-tombi@v(?!"
-        + re.escape(new_version)
-        + r"\b)\d+\.\d+\.\d+",
-        readme_content,
-    ):
-        return True
-
-    stale_patterns = (
-        r"archive-checksum: '<sha256-checksum>'",
-        r"binary-checksum: '<sha256-checksum>'",
-        r"(?m)^    version: '[^']+'\n    archive-checksum:",
-        r"(?m)^    version: '[^']+'\n    binary-checksum:",
-        r"<summary>Checksums for all supported targets</summary>",
-        r"<summary>Archive checksums for all supported targets</summary>",
-        r"<summary>Executable binary checksums for all supported targets</summary>",
-    )
-    if any(re.search(pattern, readme_content) for pattern in stale_patterns):
-        return True
-
-    required_patterns = (
-        r"<summary>🔐 Archive checksums for all supported targets</summary>",
-        r"<summary>🔐 Executable binary checksums for all supported targets</summary>",
-        r"archive-checksum: '[0-9a-f]{64}'",
-        r"binary-checksum: '[0-9a-f]{64}'",
-    )
-    return not all(re.search(pattern, readme_content) for pattern in required_patterns)
-
-
 def update_readme(new_version: str, checksums: list[ReleaseChecksums]) -> bool:
     readme_path = REPO_ROOT / "README.md"
     readme_content = readme_path.read_text()
@@ -287,7 +254,7 @@ def update_readme(new_version: str, checksums: list[ReleaseChecksums]) -> bool:
     updated_content = re.sub(binary_details_pattern, "\n", updated_content)
 
     archive_insert_after = (
-        r"(?s)(For the archive\n\n"
+        r"(?s)((?:#{1,6} )?For the archive\n\n"
         r"```yaml\n"
         r"- uses: tombi-toml/setup-tombi@v\d+\.\d+\.\d+\n"
         r"  with:\n"
@@ -304,7 +271,7 @@ def update_readme(new_version: str, checksums: list[ReleaseChecksums]) -> bool:
         raise RuntimeError("Could not update archive checksum details in README.md")
 
     binary_insert_after = (
-        r"(?s)(For the executable binary\n\n"
+        r"(?s)((?:#{1,6} )?For the executable binary\n\n"
         r"```yaml\n"
         r"- uses: tombi-toml/setup-tombi@v\d+\.\d+\.\d+\n"
         r"  with:\n"
@@ -333,12 +300,6 @@ def main():
     current_package_version = read_package_version()
     print(f"Current package version: {current_package_version}")
     print(f"Target version: {target_version}")
-
-    package_needs_update = current_package_version != target_version
-    readme_requires_update = readme_needs_update(target_version)
-    if not package_needs_update and not readme_requires_update:
-        print("Versions are already up to date")
-        return
 
     checksums = fetch_release_checksums(target_version)
     package_updated = update_package_json(target_version)
