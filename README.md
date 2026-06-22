@@ -7,7 +7,7 @@ This action sets up [Tombi](https://github.com/tombi-toml/tombi) in your GitHub 
 ### Basic usage
 
 ```yaml
-- uses: tombi-toml/setup-tombi@v1.1.4
+- uses: tombi-toml/setup-tombi@v1.1.5
 ```
 
 This is the recommended form from `setup-tombi@v1.1.0` onward. When `with.version` is omitted, the action installs the `tombi` CLI version that matches the `setup-tombi` release version.
@@ -15,7 +15,7 @@ This is the recommended form from `setup-tombi@v1.1.0` onward. When `with.versio
 ### Install a specific version
 
 ```yaml
-- uses: tombi-toml/setup-tombi@v1.1.4
+- uses: tombi-toml/setup-tombi@v1.1.5
   with:
     version: '1.0.0'
 ```
@@ -23,7 +23,7 @@ This is the recommended form from `setup-tombi@v1.1.0` onward. When `with.versio
 ### Install a version from a lock file
 
 ```yaml
-- uses: tombi-toml/setup-tombi@v1.1.4
+- uses: tombi-toml/setup-tombi@v1.1.5
   with:
     lockfile: 'uv.lock'
 ```
@@ -33,7 +33,7 @@ This is the recommended form from `setup-tombi@v1.1.0` onward. When `with.versio
 For the archive
 
 ```yaml
-- uses: tombi-toml/setup-tombi@v1.1.4
+- uses: tombi-toml/setup-tombi@v1.1.5
   with:
     version: '1.0.0'
     archive-checksum: '<sha256-checksum>'
@@ -42,7 +42,7 @@ For the archive
 For the executable binary
 
 ```yaml
-- uses: tombi-toml/setup-tombi@v1.1.4
+- uses: tombi-toml/setup-tombi@v1.1.5
   with:
     version: '1.0.0'
     binary-checksum: '<sha256-checksum>'
@@ -56,7 +56,7 @@ For the executable binary
 Use `enable-cache: true` only when you want to force cache on, for example on self-hosted runners.
 
 ```yaml
-- uses: tombi-toml/setup-tombi@v1.1.4
+- uses: tombi-toml/setup-tombi@v1.1.5
   with:
     enable-cache: true
 ```
@@ -64,7 +64,7 @@ Use `enable-cache: true` only when you want to force cache on, for example on se
 ### Use a custom cache directory
 
 ```yaml
-- uses: tombi-toml/setup-tombi@v1.1.4
+- uses: tombi-toml/setup-tombi@v1.1.5
   with:
     enable-cache: true
   env:
@@ -101,7 +101,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: tombi-toml/setup-tombi@v1.1.4
+      - uses: tombi-toml/setup-tombi@v1.1.5
       - name: Validate TOML files
         run: tombi lint
 ```
