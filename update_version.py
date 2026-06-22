@@ -174,42 +174,6 @@ def update_package_json(new_version: str) -> bool:
     return True
 
 
-def readme_needs_update(new_version: str) -> bool:
-    readme_path = REPO_ROOT / "README.md"
-    readme_content = readme_path.read_text()
-
-    if f"<!-- checksum-version: {new_version} -->" not in readme_content:
-        return True
-
-    if re.search(
-        r"uses: tombi-toml/setup-tombi@v(?!"
-        + re.escape(new_version)
-        + r"\b)\d+\.\d+\.\d+",
-        readme_content,
-    ):
-        return True
-
-    stale_patterns = (
-        r"archive-checksum: '<sha256-checksum>'",
-        r"binary-checksum: '<sha256-checksum>'",
-        r"(?m)^    version: '[^']+'\n    archive-checksum:",
-        r"(?m)^    version: '[^']+'\n    binary-checksum:",
-        r"<summary>Checksums for all supported targets</summary>",
-        r"<summary>Archive checksums for all supported targets</summary>",
-        r"<summary>Executable binary checksums for all supported targets</summary>",
-    )
-    if any(re.search(pattern, readme_content) for pattern in stale_patterns):
-        return True
-
-    required_patterns = (
-        r"<summary>🔐 Archive checksums for all supported targets</summary>",
-        r"<summary>🔐 Executable binary checksums for all supported targets</summary>",
-        r"archive-checksum: '[0-9a-f]{64}'",
-        r"binary-checksum: '[0-9a-f]{64}'",
-    )
-    return not all(re.search(pattern, readme_content) for pattern in required_patterns)
-
-
 def update_readme(new_version: str, checksums: list[ReleaseChecksums]) -> bool:
     readme_path = REPO_ROOT / "README.md"
     readme_content = readme_path.read_text()
@@ -248,14 +212,7 @@ def update_readme(new_version: str, checksums: list[ReleaseChecksums]) -> bool:
     if binary_replacements != 1:
         raise RuntimeError("Could not update binary-checksum example in README.md")
 
-    updated_content = re.sub(
-        r"\n?<!-- checksum-version: [^>]+ -->\n?",
-        "\n",
-        updated_content,
-    )
-
     archive_details = (
-        f"<!-- checksum-version: {new_version} -->\n"
         "<details>\n"
         "<summary>🔐 Archive checksums for all supported targets</summary>\n\n"
         f"{render_checksum_table(checksums, 'archive', 'Archive checksum')}\n\n"
@@ -343,12 +300,6 @@ def main():
     current_package_version = read_package_version()
     print(f"Current package version: {current_package_version}")
     print(f"Target version: {target_version}")
-
-    package_needs_update = current_package_version != target_version
-    readme_requires_update = readme_needs_update(target_version)
-    if not package_needs_update and not readme_requires_update:
-        print("Versions are already up to date")
-        return
 
     checksums = fetch_release_checksums(target_version)
     package_updated = update_package_json(target_version)

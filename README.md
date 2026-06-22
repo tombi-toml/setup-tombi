@@ -40,7 +40,6 @@ The checksum examples below are for GitHub-hosted Linux x64 runners (`x86_64-unk
     archive-checksum: '533d47fe516468fa0abc245050dbc120fcbfa4399fdbfebe863758dc9d95f5fe'
 ```
 
-<!-- checksum-version: 1.1.5 -->
 <details>
 <summary>🔐 Archive checksums for all supported targets</summary>
 
