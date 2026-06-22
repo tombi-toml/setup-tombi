@@ -178,6 +178,9 @@ def readme_needs_update(new_version: str) -> bool:
     readme_path = REPO_ROOT / "README.md"
     readme_content = readme_path.read_text()
 
+    if f"<!-- checksum-version: {new_version} -->" not in readme_content:
+        return True
+
     if re.search(
         r"uses: tombi-toml/setup-tombi@v(?!"
         + re.escape(new_version)
@@ -245,7 +248,14 @@ def update_readme(new_version: str, checksums: list[ReleaseChecksums]) -> bool:
     if binary_replacements != 1:
         raise RuntimeError("Could not update binary-checksum example in README.md")
 
+    updated_content = re.sub(
+        r"\n?<!-- checksum-version: [^>]+ -->\n?",
+        "\n",
+        updated_content,
+    )
+
     archive_details = (
+        f"<!-- checksum-version: {new_version} -->\n"
         "<details>\n"
         "<summary>🔐 Archive checksums for all supported targets</summary>\n\n"
         f"{render_checksum_table(checksums, 'archive', 'Archive checksum')}\n\n"
@@ -287,7 +297,7 @@ def update_readme(new_version: str, checksums: list[ReleaseChecksums]) -> bool:
     updated_content = re.sub(binary_details_pattern, "\n", updated_content)
 
     archive_insert_after = (
-        r"(?s)(For the archive\n\n"
+        r"(?s)((?:#{1,6} )?For the archive\n\n"
         r"```yaml\n"
         r"- uses: tombi-toml/setup-tombi@v\d+\.\d+\.\d+\n"
         r"  with:\n"
@@ -304,7 +314,7 @@ def update_readme(new_version: str, checksums: list[ReleaseChecksums]) -> bool:
         raise RuntimeError("Could not update archive checksum details in README.md")
 
     binary_insert_after = (
-        r"(?s)(For the executable binary\n\n"
+        r"(?s)((?:#{1,6} )?For the executable binary\n\n"
         r"```yaml\n"
         r"- uses: tombi-toml/setup-tombi@v\d+\.\d+\.\d+\n"
         r"  with:\n"

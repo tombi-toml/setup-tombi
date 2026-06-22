@@ -54,7 +54,7 @@ class UpdateVersionTest(unittest.TestCase):
                 readme_path.write_text(
                     """# setup-tombi
 
-For the archive
+#### For the archive
 
 ```yaml
 - uses: tombi-toml/setup-tombi@v1.1.4
@@ -63,7 +63,7 @@ For the archive
     archive-checksum: '<sha256-checksum>'
 ```
 
-For the executable binary
+#### For the executable binary
 
 ```yaml
 - uses: tombi-toml/setup-tombi@v1.1.4
@@ -95,7 +95,7 @@ For the executable binary
                     readme_path.read_text(),
                     """# setup-tombi
 
-For the archive
+#### For the archive
 
 ```yaml
 - uses: tombi-toml/setup-tombi@v1.2.3
@@ -103,6 +103,7 @@ For the archive
     archive-checksum: 'archive-sha'
 ```
 
+<!-- checksum-version: 1.2.3 -->
 <details>
 <summary>🔐 Archive checksums for all supported targets</summary>
 
@@ -113,7 +114,7 @@ For the archive
 
 </details>
 
-For the executable binary
+#### For the executable binary
 
 ```yaml
 - uses: tombi-toml/setup-tombi@v1.2.3
@@ -143,6 +144,8 @@ For the executable binary
                 readme_path = update_version.REPO_ROOT / "README.md"
                 readme_path.write_text(
                     """# setup-tombi
+
+<!-- checksum-version: 1.2.3 -->
 
 ```yaml
 - uses: tombi-toml/setup-tombi@v1.2.3
@@ -214,7 +217,7 @@ For the executable binary
                 readme_path.write_text(
                     """# setup-tombi
 
-For the archive
+#### For the archive
 
 ```yaml
 - uses: tombi-toml/setup-tombi@v1.2.3
@@ -222,7 +225,7 @@ For the archive
     archive-checksum: 'old-archive-sha'
 ```
 
-For the executable binary
+#### For the executable binary
 
 ```yaml
 - uses: tombi-toml/setup-tombi@v1.2.3
@@ -274,7 +277,7 @@ For the executable binary
                     "| `aarch64-pc-windows-msvc` | `windows-arm64-binary-sha` |",
                     readme_path.read_text(),
                 )
-                self.assertNotIn("version:", readme_path.read_text())
+                self.assertNotIn("    version:", readme_path.read_text())
             finally:
                 update_version.REPO_ROOT = original_repo_root
 

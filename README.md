@@ -37,21 +37,22 @@ The checksum examples below are for GitHub-hosted Linux x64 runners (`x86_64-unk
 ```yaml
 - uses: tombi-toml/setup-tombi@v1.1.5
   with:
-    archive-checksum: '65586fb53f36b989636d2e83e27316d788056835cc7f8e6e38ba445fb17d9b43'
+    archive-checksum: '533d47fe516468fa0abc245050dbc120fcbfa4399fdbfebe863758dc9d95f5fe'
 ```
 
+<!-- checksum-version: 1.1.5 -->
 <details>
 <summary>🔐 Archive checksums for all supported targets</summary>
 
 | Target | Archive checksum |
 |--------|----------|
-| `aarch64-apple-darwin` | `db11c9c7e0b3d628ce62040f2e4be3cdacb808193de30959dbc48ad7250c3926` |
-| `aarch64-pc-windows-msvc` | `f3ccf5813776f2202d8ee5258298c604f700c588f3ef3a974b0b85b2c864db29` |
-| `aarch64-unknown-linux-musl` | `2f0242007c7723706b2c62bb07fc1351ffd9604bf45bfedde68f8588c61d260f` |
-| `arm-unknown-linux-gnueabihf` | `e512e2730ac2599ba3a7692575cc2748e714dfab6a315c4e6cbebbd0a314fd5e` |
-| `x86_64-apple-darwin` | `6dbc29396ee4c85bb73dcc67dd398772964bf2fca4ba671bed31e80fefe8a93a` |
-| `x86_64-pc-windows-msvc` | `6a62ddbfda2e32a59e05fdab6d93a9c33938e0f0ae05594cad8666a81d91eef7` |
-| `x86_64-unknown-linux-musl` | `65586fb53f36b989636d2e83e27316d788056835cc7f8e6e38ba445fb17d9b43` |
+| `aarch64-apple-darwin` | `bb6c09efabc5114d6ae7e188fc72ce28e2b8e378f79835d5601e6bc038bca0ea` |
+| `aarch64-pc-windows-msvc` | `1a184c261ca5a6b817d8ef7f5b3104751b1e2171afa45c0c59ac5bb740b12846` |
+| `aarch64-unknown-linux-musl` | `32cde3d006175407f44535770747b4629c27776fde62a0cbb1f891e8361526dc` |
+| `arm-unknown-linux-gnueabihf` | `1d9a4265a6457e4fbdbbdbeea1130dca94c6205b1d100d23eaee48ddd4f9579e` |
+| `x86_64-apple-darwin` | `c9c4328970fe46f17edbafea4b4880bfa9e7eaa8baab9baf0813a47e99af452e` |
+| `x86_64-pc-windows-msvc` | `c6a4234c17cff35f6ab687b35bea85d63bb1b91c96a70bde043bd1c9dc260dea` |
+| `x86_64-unknown-linux-musl` | `533d47fe516468fa0abc245050dbc120fcbfa4399fdbfebe863758dc9d95f5fe` |
 
 </details>
 
@@ -60,7 +61,7 @@ The checksum examples below are for GitHub-hosted Linux x64 runners (`x86_64-unk
 ```yaml
 - uses: tombi-toml/setup-tombi@v1.1.5
   with:
-    binary-checksum: '80f66f194d2950f791cfcc84707ac82c7aa623dab4cf836d69ac1982453e3d84'
+    binary-checksum: 'd7f7ad16b0d0bdca260836beb3fb3795b306bb7ffedebd359648c07eec2dca92'
 ```
 
 <details>
@@ -68,13 +69,13 @@ The checksum examples below are for GitHub-hosted Linux x64 runners (`x86_64-unk
 
 | Target | Binary checksum |
 |--------|----------|
-| `aarch64-apple-darwin` | `cf26e34d83c54a899329df045e7cb22b798106aa78793cd13985cf5657214769` |
-| `aarch64-pc-windows-msvc` | `dd2233f1d9a94f7f14c7fe07def06b83e3b2c91e85c87dc0af80f6fe06e87841` |
-| `aarch64-unknown-linux-musl` | `229ca39a1733b4eb475f35445e2f378431843d485e450e8584288db23aaec21b` |
-| `arm-unknown-linux-gnueabihf` | `30a8bfe889be54accddd456240e58360d28e0739e08218ca811699523e11df91` |
-| `x86_64-apple-darwin` | `c2b06ab294a3130f9b1b4466622261f24db1a0ae8a3769ccf9e3d38bbf8206a8` |
-| `x86_64-pc-windows-msvc` | `725e022cc7d5053c448ec790f27d44b8327970b1a2d7cb3723dae4b81451cd5c` |
-| `x86_64-unknown-linux-musl` | `80f66f194d2950f791cfcc84707ac82c7aa623dab4cf836d69ac1982453e3d84` |
+| `aarch64-apple-darwin` | `b8998eb4f69d3d4a0f24b6a5f210cccf8ab025acfeadc110bc063a780e52e14a` |
+| `aarch64-pc-windows-msvc` | `605c4bbe89e479162866525677c0e027fb429bf2aaf1e8664a3362fc129c7eab` |
+| `aarch64-unknown-linux-musl` | `a5f58be1200a4fdb7e20aca5a8f0e3fd57a2e98d02e5b8be26cb32db93d19913` |
+| `arm-unknown-linux-gnueabihf` | `a90220757f1eace3214f4187f7ea7eaf8a50209c1ba72ef41dfd76992ca5c2a7` |
+| `x86_64-apple-darwin` | `5fdb6fabbb1d416f00ca6efc93f7e201b7bdc012dd151bf58fa4b2aa783761e5` |
+| `x86_64-pc-windows-msvc` | `32da7d9c080379a15f0275bbe0638cc477609bb975ed1b883e9d4964f8dbe9a6` |
+| `x86_64-unknown-linux-musl` | `d7f7ad16b0d0bdca260836beb3fb3795b306bb7ffedebd359648c07eec2dca92` |
 
 </details>
 
