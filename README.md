@@ -32,7 +32,7 @@ This is the recommended form from `setup-tombi@v1.1.0` onward. When `with.versio
 
 The checksum examples below are for GitHub-hosted Linux x64 runners (`x86_64-unknown-linux-musl`).
 
-For the archive
+#### For the archive
 
 ```yaml
 - uses: tombi-toml/setup-tombi@v1.1.5
@@ -55,7 +55,7 @@ For the archive
 
 </details>
 
-For the executable binary
+#### For the executable binary
 
 ```yaml
 - uses: tombi-toml/setup-tombi@v1.1.5
