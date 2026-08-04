@@ -8,8 +8,15 @@ inputs:
   lockfile:
     description: "Path to a lock file used to resolve the Tombi version (uv.lock, poetry.lock, pnpm-lock.yaml, package-lock.json, yarn.lock, bun.lock). Mutually exclusive with version."
     required: false
+  binary-checksum:
+    description: "SHA256 checksum to validate the installed executable binary"
+    required: false
   checksum:
-    description: "SHA256 checksum to validate the downloaded executable"
+    description: "Alias for binary-checksum"
+    required: false
+    deprecationMessage: "Use 'binary-checksum' instead"
+  archive-checksum:
+    description: "SHA256 checksum to validate the downloaded archive"
     required: false
   enable-cache:
     description: 'Enable persistence of the Tombi cache. Supports "true", "false", and "auto".'
