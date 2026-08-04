@@ -26,15 +26,21 @@
   "author": "tombi-toml",
   "license": "MIT",
   "packageManager": "pnpm@10.10.0",
+  "pnpm": {
+    "overrides": {
+      "undici": "6.28.0",
+      "uuid": "11.1.1"
+    }
+  },
   "dependencies": {
-    "@actions/cache": "^4.0.2",
-    "@actions/core": "^1.10.1",
-    "@actions/tool-cache": "^2.0.1"
+    "@actions/cache": "^4.1.0",
+    "@actions/core": "^1.11.1",
+    "@actions/tool-cache": "^2.0.2"
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
-    "@types/node": "^20.11.24",
-    "@vercel/ncc": "^0.38.1",
+    "@types/node": "^20.19.43",
+    "@vercel/ncc": "^0.38.4",
     "cross-env": "^7.0.3",
     "typescript": "^5.3.3",
     "vitest": "^4.1.0"
