@@ -7,7 +7,7 @@ This action sets up [Tombi](https://github.com/tombi-toml/tombi) in your GitHub 
 ### Basic usage
 
 ```yaml
-- uses: tombi-toml/setup-tombi@v1.2.8
+- uses: tombi-toml/setup-tombi@v1.2.9
 ```
 
 This is the recommended form from `setup-tombi@v1.1.0` onward. When `with.version` is omitted, the action installs the `tombi` CLI version that matches the `setup-tombi` release version.
@@ -15,7 +15,7 @@ This is the recommended form from `setup-tombi@v1.1.0` onward. When `with.versio
 ### Install a specific version
 
 ```yaml
-- uses: tombi-toml/setup-tombi@v1.2.8
+- uses: tombi-toml/setup-tombi@v1.2.9
   with:
     version: '1.0.0'
 ```
@@ -23,7 +23,7 @@ This is the recommended form from `setup-tombi@v1.1.0` onward. When `with.versio
 ### Install a version from a lock file
 
 ```yaml
-- uses: tombi-toml/setup-tombi@v1.2.8
+- uses: tombi-toml/setup-tombi@v1.2.9
   with:
     lockfile: 'uv.lock'
 ```
@@ -35,9 +35,9 @@ The checksum examples below are for GitHub-hosted Linux x64 runners (`x86_64-unk
 #### For the archive
 
 ```yaml
-- uses: tombi-toml/setup-tombi@v1.2.8
+- uses: tombi-toml/setup-tombi@v1.2.9
   with:
-    archive-checksum: 'be0f539e0474d250f77fa8fae845b4507036f5b95da782f9fc1d9f6a97c5bf30'
+    archive-checksum: '406084aa965a196d16b127e5a5d9379b9b0cebcfea0ef73f63fc309044488a6c'
 ```
 
 <details>
@@ -45,22 +45,22 @@ The checksum examples below are for GitHub-hosted Linux x64 runners (`x86_64-unk
 
 | Target | Archive checksum |
 |--------|----------|
-| `aarch64-apple-darwin` | `e1d5a8649c4dcff8a18f97a84df2aaf733ce6d463380eb316d2e4d57e238bf2e` |
-| `aarch64-pc-windows-msvc` | `53839762076412f4d3a0f5e0d623a620f8d2607787e739d88d38f639974aa64f` |
-| `aarch64-unknown-linux-musl` | `e1861e75a1796d88f9a33799229bc972179a44f2a7bebc666f33ee7b3d44474b` |
-| `arm-unknown-linux-gnueabihf` | `005889114d1cfee36711f4c6cc4bd216ab1551a57c798ad1be38d7fa92403c06` |
-| `x86_64-apple-darwin` | `88d949d3eeee483d6423e3c12f5c44d7b5b59397cfa4240ba02d423af11e70d4` |
-| `x86_64-pc-windows-msvc` | `3af4fbc3b42579c795d7b3a7a3bf04d8c59c203569d9194733f7ad56f1c31c18` |
-| `x86_64-unknown-linux-musl` | `be0f539e0474d250f77fa8fae845b4507036f5b95da782f9fc1d9f6a97c5bf30` |
+| `aarch64-apple-darwin` | `4db87b103cc5319189b402ac10888818a8a6d6b3142f60a9fed0dd60189044c0` |
+| `aarch64-pc-windows-msvc` | `e67f042e6b3a24713ffc3beaf88b38f76786eb21f3e51d6105232eb5ab97ff46` |
+| `aarch64-unknown-linux-musl` | `7938a6efaf17fcf1be052ae91bfcdda9f6615f2e25fd3151f943021d3bfdb742` |
+| `arm-unknown-linux-gnueabihf` | `81bc56f41ecaad3fcabd7b0e2f09238da22b63e9b035a6e31c81f666a2247edc` |
+| `x86_64-apple-darwin` | `1b0dfadb9ae2a15bd9e21de98594fd94d36b005737f6adb0dafca8b3e33a443d` |
+| `x86_64-pc-windows-msvc` | `2f265d58b74d7008af84cd8ba484be38943f236b68482ea9644caf8279b3c9d4` |
+| `x86_64-unknown-linux-musl` | `406084aa965a196d16b127e5a5d9379b9b0cebcfea0ef73f63fc309044488a6c` |
 
 </details>
 
 #### For the executable binary
 
 ```yaml
-- uses: tombi-toml/setup-tombi@v1.2.8
+- uses: tombi-toml/setup-tombi@v1.2.9
   with:
-    binary-checksum: '048e6a51058f0df9b71ea274561cf58f4546f2467f601d2001daa6e851556c0d'
+    binary-checksum: 'b544a52d67e96078cd5b25b464bedf24321eb3ada6ecbb2ddd363c941aab9ee2'
 ```
 
 <details>
@@ -68,13 +68,13 @@ The checksum examples below are for GitHub-hosted Linux x64 runners (`x86_64-unk
 
 | Target | Binary checksum |
 |--------|----------|
-| `aarch64-apple-darwin` | `443a4016f48baf59a627f09cda498bc648c83ad61b0b4f9745084cf6183c179c` |
-| `aarch64-pc-windows-msvc` | `3cbbb2f21dd1249e233becc24e3801537ba86fe242ebaed29265c91fb0067456` |
-| `aarch64-unknown-linux-musl` | `1a0a0e73094ab56994be8d6df23fb87b6e6be37b0804ee98363f302e1c887a0e` |
-| `arm-unknown-linux-gnueabihf` | `20ed31927a0547eeb5c10a0dc47b9fe5091c258c1d51909ff78bcf90a17d7cb3` |
-| `x86_64-apple-darwin` | `33c76dedad84c39d96027d3bd8ada0f432fa2e67237d5c02a83c36657a142cf5` |
-| `x86_64-pc-windows-msvc` | `9b711e5175259bd1a982d64f9826b6c2399bd04478011813723197d54e11e564` |
-| `x86_64-unknown-linux-musl` | `048e6a51058f0df9b71ea274561cf58f4546f2467f601d2001daa6e851556c0d` |
+| `aarch64-apple-darwin` | `ab0b12a436e347ff20b25f9db3ca869ef3cc1632d1bd12e657108f4b28e2568f` |
+| `aarch64-pc-windows-msvc` | `9cde2780b84cbc1e89b5cec9adc25958e618e87f4fa0a2d937ac98226aeb49f8` |
+| `aarch64-unknown-linux-musl` | `5aec0058725a8f58a2d0c030cacbb434276b5bdf06aa686eca10710f06b31249` |
+| `arm-unknown-linux-gnueabihf` | `5501c11626eefd40efe17d6a1e7a5dfe0e7ca7b5f627e65c34b983df947cfc80` |
+| `x86_64-apple-darwin` | `1c75e41f0896f6186aa94de04a55ec8bbc569d5a69ddbc0f196dfe8eb2d04ae9` |
+| `x86_64-pc-windows-msvc` | `014cf65f61832ad8a8562a3edc6f21cc007e6dddfd5bf339268cc0397ee23ff6` |
+| `x86_64-unknown-linux-musl` | `b544a52d67e96078cd5b25b464bedf24321eb3ada6ecbb2ddd363c941aab9ee2` |
 
 </details>
 
@@ -86,7 +86,7 @@ The checksum examples below are for GitHub-hosted Linux x64 runners (`x86_64-unk
 Use `enable-cache: true` only when you want to force cache on, for example on self-hosted runners.
 
 ```yaml
-- uses: tombi-toml/setup-tombi@v1.2.8
+- uses: tombi-toml/setup-tombi@v1.2.9
   with:
     enable-cache: true
 ```
@@ -94,7 +94,7 @@ Use `enable-cache: true` only when you want to force cache on, for example on se
 ### Use a custom cache directory
 
 ```yaml
-- uses: tombi-toml/setup-tombi@v1.2.8
+- uses: tombi-toml/setup-tombi@v1.2.9
   with:
     enable-cache: true
   env:
@@ -131,7 +131,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: tombi-toml/setup-tombi@v1.2.8
+      - uses: tombi-toml/setup-tombi@v1.2.9
       - name: Validate TOML files
         run: tombi lint
 ```
