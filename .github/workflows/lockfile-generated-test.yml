@@ -23,15 +23,15 @@ jobs:
           - bun
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version-file: ".node-version"
 
       - name: Install pnpm
-        uses: pnpm/action-setup@v2
+        uses: pnpm/action-setup@v6
         with:
           run_install: false
 
@@ -40,13 +40,13 @@ jobs:
 
       - name: Setup Python
         if: matrix.manager == 'uv' || matrix.manager == 'poetry'
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.11"
 
       - name: Setup uv
         if: matrix.manager == 'uv'
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v10.1.0
 
       - name: Setup Poetry
         if: matrix.manager == 'poetry'

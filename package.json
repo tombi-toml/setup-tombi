@@ -6,10 +6,10 @@
   "main": "dist/index.js",
   "scripts": {
     "preinstall": "npx only-allow pnpm",
-    "build": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\" && ncc build src/index.ts -o dist && ncc build src/post.ts -o dist/post",
-    "format": "biome format --fix",
+    "build": "node -e \"for (const dir of ['dist', 'lib']) require('node:fs').rmSync(dir, { recursive: true, force: true })\" && tsc && ncc build lib/index.js -o dist && ncc build lib/post.js -o dist/post",
+    "format": "biome format --write",
     "format-check": "biome format",
-    "lint": "biome lint --fix",
+    "lint": "biome lint --write",
     "lint-check": "biome lint",
     "test": "vitest run",
     "test:lockfile-generated": "cross-env LOCKFILE_GENERATION_TEST=1 vitest run tests/lockfile/generated/*.test.ts",
@@ -26,23 +26,17 @@
   "author": "tombi-toml",
   "license": "MIT",
   "packageManager": "pnpm@10.10.0",
-  "pnpm": {
-    "overrides": {
-      "undici": "6.28.0",
-      "uuid": "11.1.1"
-    }
-  },
   "dependencies": {
-    "@actions/cache": "^4.1.0",
-    "@actions/core": "^1.11.1",
-    "@actions/tool-cache": "^2.0.2"
+    "@actions/cache": "^6.2.0",
+    "@actions/core": "^3.0.1",
+    "@actions/tool-cache": "^4.0.0"
   },
   "devDependencies": {
-    "@biomejs/biome": "1.9.4",
-    "@types/node": "^20.19.43",
-    "@vercel/ncc": "^0.38.4",
-    "cross-env": "^7.0.3",
-    "typescript": "^5.3.3",
-    "vitest": "^4.1.0"
+    "@biomejs/biome": "2.5.14",
+    "@types/node": "^24.13.5",
+    "@vercel/ncc": "^0.45.0",
+    "cross-env": "^10.1.0",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.1"
   }
 }

@@ -1,8 +1,10 @@
 {
   "compilerOptions": {
     "target": "ES2024",
-    "module": "commonjs",
-    "outDir": "./dist",
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "types": ["node"],
+    "outDir": "./lib",
     "rootDir": "./src",
     "strict": true,
     "esModuleInterop": true,

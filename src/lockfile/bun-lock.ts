@@ -5,9 +5,7 @@ import {
 } from "./common";
 
 function getBunPackagePattern(packageName: string): RegExp {
-  return new RegExp(
-    String.raw`${escapeRegex(packageName)}@([0-9][0-9A-Za-z.+-]*)`,
-  );
+  return new RegExp(`${escapeRegex(packageName)}@([0-9][0-9A-Za-z.+-]*)`);
 }
 
 function matchBunPackageVersion(

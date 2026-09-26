@@ -20,8 +20,9 @@ function getBinaryName(): string {
   return isWindows() ? "tombi.exe" : "tombi";
 }
 
-function getDefaultTombiVersion(): string {
-  const packageJsonPath = path.resolve(__dirname, "..", "package.json");
+function getDefaultTombiVersion(actionDir: string): string {
+  // Resolve at runtime so release version updates do not require rebuilding.
+  const packageJsonPath = path.resolve(actionDir, "..", "package.json");
   const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8")) as {
     version?: unknown;
   };
@@ -72,7 +73,7 @@ async function resolveRequestedVersion(
     return resolvedVersion;
   }
 
-  return getDefaultTombiVersion();
+  return getDefaultTombiVersion(__dirname);
 }
 
 export async function run(): Promise<void> {
