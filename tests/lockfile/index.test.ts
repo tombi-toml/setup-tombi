@@ -11,6 +11,7 @@ describe("lockfile index helpers", () => {
     );
     expect(detectLockfileKind("/tmp/yarn.lock")).toBe("yarn.lock");
     expect(detectLockfileKind("/tmp/bun.lock")).toBe("bun.lock");
+    expect(detectLockfileKind("/tmp/mise.lock")).toBe("mise.lock");
   });
 
   it("throws for unsupported lockfile", () => {

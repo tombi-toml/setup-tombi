@@ -47312,7 +47312,7 @@ function extractVersionFromBunLock(content) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.TYPESCRIPT_PACKAGE_ALIASES = exports.PYTHON_PACKAGE_ALIASES = void 0;
+exports.MISE_TOOL_ALIASES = exports.TYPESCRIPT_PACKAGE_ALIASES = exports.PYTHON_PACKAGE_ALIASES = void 0;
 exports.escapeRegex = escapeRegex;
 exports.asRecord = asRecord;
 exports.getIndent = getIndent;
@@ -47323,6 +47323,7 @@ exports.TYPESCRIPT_PACKAGE_ALIASES = [
     "tombi",
     "@tombi-toml/tombi",
 ];
+exports.MISE_TOOL_ALIASES = ["tombi", "aqua:tombi-toml/tombi"];
 function escapeRegex(value) {
     return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
@@ -47390,7 +47391,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.SUPPORTED_LOCKFILES = exports.TYPESCRIPT_LOCKFILE_KINDS = exports.PYTHON_LOCKFILE_KINDS = void 0;
+exports.SUPPORTED_LOCKFILES = exports.MISE_LOCKFILE_KINDS = exports.TYPESCRIPT_LOCKFILE_KINDS = exports.PYTHON_LOCKFILE_KINDS = void 0;
 exports.detectLockfileKind = detectLockfileKind;
 exports.packageNotFoundError = packageNotFoundError;
 exports.extractVersionByKind = extractVersionByKind;
@@ -47411,9 +47412,11 @@ exports.TYPESCRIPT_LOCKFILE_KINDS = [
     "yarn.lock",
     "bun.lock",
 ];
+exports.MISE_LOCKFILE_KINDS = ["mise.lock"];
 exports.SUPPORTED_LOCKFILES = [
     ...exports.PYTHON_LOCKFILE_KINDS,
     ...exports.TYPESCRIPT_LOCKFILE_KINDS,
+    ...exports.MISE_LOCKFILE_KINDS,
 ];
 const LOCKFILE_PACKAGE_ALIASES = {
     "uv.lock": common_1.PYTHON_PACKAGE_ALIASES,
@@ -47422,6 +47425,7 @@ const LOCKFILE_PACKAGE_ALIASES = {
     "package-lock.json": common_1.TYPESCRIPT_PACKAGE_ALIASES,
     "yarn.lock": common_1.TYPESCRIPT_PACKAGE_ALIASES,
     "bun.lock": common_1.TYPESCRIPT_PACKAGE_ALIASES,
+    "mise.lock": common_1.MISE_TOOL_ALIASES,
 };
 function detectLockfileKind(lockfilePath) {
     const lockfileName = path.basename(lockfilePath);
@@ -47435,6 +47439,29 @@ function packageNotFoundError(lockfileInput, lockfileKind) {
     return new Error(`Package ${packageAliases
         .map((name) => `\`${name}\``)
         .join(" or ")} was not found in lock file: ${lockfileInput}`);
+}
+function extractVersionFromMiseLock(content) {
+    const lines = content.split(/\r?\n/);
+    for (let i = 0; i < lines.length; i += 1) {
+        const headerMatch = lines[i].match(/^\s*\[\[tools\.(?:"([^"]+)"|([^\]]+))\]\]\s*$/);
+        if (!headerMatch) {
+            continue;
+        }
+        const toolName = headerMatch[1] ?? headerMatch[2]?.trim();
+        if (!toolName || !(0, common_1.isTargetPackage)(toolName, common_1.MISE_TOOL_ALIASES)) {
+            continue;
+        }
+        for (let j = i + 1; j < lines.length; j += 1) {
+            if (/^\s*\[\[tools\./.test(lines[j])) {
+                break;
+            }
+            const versionMatch = lines[j].match(/^\s*version\s*=\s*["']([^"']+)["']/);
+            if (versionMatch?.[1]) {
+                return (0, common_1.cleanResolvedVersion)(versionMatch[1]);
+            }
+        }
+    }
+    return undefined;
 }
 function extractVersionByKind(lockfileKind, content) {
     switch (lockfileKind) {
@@ -47450,6 +47477,8 @@ function extractVersionByKind(lockfileKind, content) {
             return (0, yarn_lock_1.extractVersionFromYarnLock)(content);
         case "bun.lock":
             return (0, bun_lock_1.extractVersionFromBunLock)(content);
+        case "mise.lock":
+            return extractVersionFromMiseLock(content);
     }
 }
 async function resolveVersionFromLockfile(lockfileInput) {

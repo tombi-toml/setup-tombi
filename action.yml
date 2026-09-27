@@ -6,7 +6,7 @@ inputs:
     description: 'Version of Tombi to install (e.g., "1.0.0", "latest"). When omitted, installs the Tombi version that matches this setup-tombi release. Mutually exclusive with lockfile.'
     required: false
   lockfile:
-    description: "Path to a lock file used to resolve the Tombi version (uv.lock, poetry.lock, pnpm-lock.yaml, package-lock.json, yarn.lock, bun.lock). Mutually exclusive with version."
+    description: "Path to a lock file used to resolve the Tombi version (uv.lock, poetry.lock, pnpm-lock.yaml, package-lock.json, yarn.lock, bun.lock, mise.lock). Mutually exclusive with version."
     required: false
   binary-checksum:
     description: "SHA256 checksum to validate the installed executable binary"

@@ -3,6 +3,7 @@ export const TYPESCRIPT_PACKAGE_ALIASES = [
   "tombi",
   "@tombi-toml/tombi",
 ] as const;
+export const MISE_TOOL_ALIASES = ["tombi", "aqua:tombi-toml/tombi"] as const;
 
 export function escapeRegex(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
