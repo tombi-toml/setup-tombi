@@ -1,6 +1,6 @@
 {
   "name": "setup-tombi",
-  "version": "1.8.8",
+  "version": "1.8.9",
   "private": true,
   "description": "GitHub Action to set up Tombi",
   "main": "dist/index.js",
