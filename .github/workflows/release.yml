@@ -48,6 +48,20 @@ jobs:
 
           TAG="v${VERSION}"
 
+          if git rev-parse -q --verify "refs/tags/${TAG}" >/dev/null; then
+            RELEASE_SHA="$(git rev-parse "${TAG}^{commit}")"
+            TAG_VERSION="$(git show "${TAG}:package.json" | python3 -c 'import json, sys; print(json.load(sys.stdin)["version"])')"
+            if [ "${TAG_VERSION}" != "${VERSION}" ]; then
+              echo "Existing tag ${TAG} has package.json version ${TAG_VERSION}, expected ${VERSION}"
+              exit 1
+            fi
+
+            echo "Reusing existing release tag ${TAG} at ${RELEASE_SHA}"
+            echo "tag=${TAG}" >> "${GITHUB_OUTPUT}"
+            echo "release_sha=${RELEASE_SHA}" >> "${GITHUB_OUTPUT}"
+            exit 0
+          fi
+
           python3 update_version.py --version "${VERSION}"
 
           if git diff --quiet -- package.json README.md; then
@@ -138,5 +152,4 @@ jobs:
           git tag -fa "${MAJOR}" "${RELEASE_SHA}" -m "${MESSAGE}"
           git tag -fa "${MINOR}" "${RELEASE_SHA}" -m "${MESSAGE}"
 
-          git push --force origin "refs/tags/${MAJOR}"
-          git push --force origin "refs/tags/${MINOR}"
+          git push --atomic --force origin "refs/tags/${MAJOR}" "refs/tags/${MINOR}"
